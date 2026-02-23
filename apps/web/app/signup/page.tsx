@@ -30,7 +30,6 @@ const SignupPage = () => {
         state: state,
         pending,
         onSuccess: () => {
-            toast.dismiss('signup-loading');
             toast.success('Account created successfully!');
         },
         onError: () => {

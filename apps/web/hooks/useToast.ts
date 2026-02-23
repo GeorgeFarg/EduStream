@@ -19,8 +19,8 @@ export const useToastAction = <T extends { success?: boolean; errors?: Record<st
         if (pending) {
             toast.loading('Loading...', { id: 'signup-loading' });
         } else if (state?.success) {
-            onSuccess();
             toast.dismiss('signup-loading');
+            onSuccess();
         } else if (state?.errors && Object.keys(state.errors).length > 0) {
             toast.dismiss('signup-loading');
             onError();
