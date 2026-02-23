@@ -12,26 +12,21 @@ const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Dimmed background */}
       <div 
         className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
         onClick={onClose} 
       />
 
-      {/* Modal body - colors matching PostContent */}
       <div className="relative bg-white w-full max-w-2xl rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
         
-        {/* Title */}
         <div className="p-8 pb-2 border-b border-zinc-200">
           <h2 className="text-[24px] text-right text-zinc-700 font-medium">{title}</h2>
         </div>
 
-        {/* Content (PostContent) */}
         <div className="p-8 pt-6">
           {children}
         </div>
 
-        {/* Cancel button at bottom */}
         <div className="flex justify-end px-8 pb-8">
           <button 
             onClick={onClose}
