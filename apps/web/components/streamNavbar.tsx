@@ -1,14 +1,14 @@
 "use client";
-import { useState } from "react"; // ضفنا State للقائمة
+import { useState } from "react";  
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { nav_links } from "@/constants/nav_links";
 import Logo from "@/components/ui/Logo"; 
-import { Menu, X } from "lucide-react"; // أيقونات للموبايل
+import { Menu, X } from "lucide-react";  
 
 const StreamNavBar = () => {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false); // حالة القائمة في الموبايل
+  const [isOpen, setIsOpen] = useState(false);   
 
   return (
     <nav className="NavBG w-full h-16 border-b border-white/5 px-4 md:px-8 flex items-center justify-between relative z-[100]">
@@ -17,8 +17,7 @@ const StreamNavBar = () => {
           <Logo />
       </div>
 
-      {/* Desktop Menu: يظهر من أول شاشة md (768px) */}
-      <div className="hidden md:flex flex-1 justify-center">
+=      <div className="hidden md:flex flex-1 justify-center">
         <ul className="flex items-center gap-6 lg:gap-10 h-full">
           {nav_links.map((link) => {
             const isActive = pathname === link.href;
@@ -41,7 +40,6 @@ const StreamNavBar = () => {
         </ul>
       </div>
 
-      {/* Mobile Menu Button: يظهر في الشاشات الصغيرة بس */}
       <button 
         className="md:hidden text-white p-2"
         onClick={() => setIsOpen(!isOpen)}
@@ -49,7 +47,6 @@ const StreamNavBar = () => {
         {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
-      {/* Mobile Dropdown: القائمة اللي بتفتح في الموبايل */}
       {isOpen && (
         <div className="absolute top-16 left-0 w-full bg-[#0a0a0a] border-b border-white/10 p-6 flex flex-col gap-4 md:hidden animate-in slide-in-from-top duration-300">
           {nav_links.map((link) => (
