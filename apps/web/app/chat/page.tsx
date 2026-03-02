@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { Circle, Hand, RefreshCw, Send } from 'lucide-react'
+import { io, Socket } from 'socket.io-client'
+import { socketBaseUrl } from '@/config/env'
 
 type Role = 'student' | 'instructor'
 type MessageType = 'message' | 'question' | 'system'
@@ -22,6 +24,67 @@ type MeetingMessage = {
   createdAt: string
 }
 
+type MeetingChatEvent = {
+  meetingId: string
+  message: MeetingMessage
+}
+
+type MeetingTypingEvent = {
+  meetingId: string
+  userId: string
+  isTyping: boolean
+}
+
+type MeetingJoinEvent = {
+  meetingId: string
+  participant: Participant
+}
+
+type MeetingLeaveEvent = {
+  meetingId: string
+  userId: string
+}
+
+type MeetingParticipantsEvent = {
+  meetingId: string
+  participants: Participant[]
+}
+
+type MeetingRaiseHandEvent = {
+  meetingId: string
+  userId: string
+  userName: string
+}
+
+type WebRtcSignalEvent = {
+  meetingId: string
+  fromUserId: string
+  toUserId?: string
+}
+
+type ServerToClientEvents = {
+  'meeting:history': (payload: { meetingId: string; messages: MeetingMessage[] }) => void
+  'meeting:chat': (payload: MeetingChatEvent) => void
+  'meeting:typing': (payload: MeetingTypingEvent) => void
+  'meeting:participants': (payload: MeetingParticipantsEvent) => void
+  'meeting:user-joined': (payload: MeetingJoinEvent) => void
+  'meeting:user-left': (payload: MeetingLeaveEvent) => void
+  'meeting:raise-hand': (payload: MeetingRaiseHandEvent) => void
+  'webrtc:offer': (payload: WebRtcSignalEvent) => void
+  'webrtc:answer': (payload: WebRtcSignalEvent) => void
+  'webrtc:ice-candidate': (payload: WebRtcSignalEvent) => void
+  'webrtc:peer-ready': (payload: WebRtcSignalEvent) => void
+}
+
+type ClientToServerEvents = {
+  'meeting:join': (payload: MeetingJoinEvent) => void
+  'meeting:leave': (payload: MeetingLeaveEvent) => void
+  'meeting:chat': (payload: MeetingChatEvent) => void
+  'meeting:typing': (payload: MeetingTypingEvent) => void
+  'meeting:raise-hand': (payload: MeetingRaiseHandEvent) => void
+  'webrtc:peer-ready': (payload: WebRtcSignalEvent) => void
+}
+
 const MEETING_ID = 'networks-live-lecture-06'
 const STORAGE_KEY = `edustream-live-chat-${MEETING_ID}`
 const SESSION_START_ISO = '2026-03-02T19:00:00.000Z'
@@ -35,6 +98,8 @@ const PARTICIPANTS: Participant[] = [
 ]
 
 const CURRENT_USER_ID = 'std-01'
+const DEFAULT_CURRENT_USER = PARTICIPANTS.find((participant) => participant.id === CURRENT_USER_ID)!
+const DEFAULT_INSTRUCTOR = PARTICIPANTS.find((participant) => participant.role === 'instructor')!
 
 const INITIAL_MESSAGES: MeetingMessage[] = [
   {
@@ -93,22 +158,28 @@ function getInstructorReply(messageText: string): string {
 
 export default function LiveMeetingChatPage() {
   const [messages, setMessages] = useState<MeetingMessage[]>(INITIAL_MESSAGES)
+  const [participants, setParticipants] = useState<Participant[]>(PARTICIPANTS)
   const [input, setInput] = useState('')
   const [messageType, setMessageType] = useState<MessageType>('message')
   const [instructorTyping, setInstructorTyping] = useState(false)
+  const [remoteTypingUserIds, setRemoteTypingUserIds] = useState<string[]>([])
+  const [socketConnected, setSocketConnected] = useState(false)
+  const [lastSignalEvent, setLastSignalEvent] = useState<string>('No signaling event yet')
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const replyTimeoutRef = useRef<number | null>(null)
+  const typingTimeoutRef = useRef<number | null>(null)
+  const socketRef = useRef<Socket<ServerToClientEvents, ClientToServerEvents> | null>(null)
 
   const currentUser = useMemo(
-    () => PARTICIPANTS.find((participant) => participant.id === CURRENT_USER_ID) ?? PARTICIPANTS[0]!,
-    []
+    () => participants.find((participant) => participant.id === CURRENT_USER_ID) ?? DEFAULT_CURRENT_USER,
+    [participants]
   )
   const instructor = useMemo(
-    () =>
-      PARTICIPANTS.find((participant) => participant.role === 'instructor') ?? PARTICIPANTS[0]!,
-    []
+    () => participants.find((participant) => participant.role === 'instructor') ?? DEFAULT_INSTRUCTOR,
+    [participants]
   )
+  const isRealtimeConnected = Boolean(socketBaseUrl && socketConnected)
 
   useEffect(() => {
     const storedMessages = localStorage.getItem(STORAGE_KEY)
@@ -155,8 +226,158 @@ export default function LiveMeetingChatPage() {
       if (replyTimeoutRef.current) {
         window.clearTimeout(replyTimeoutRef.current)
       }
+      if (typingTimeoutRef.current) {
+        window.clearTimeout(typingTimeoutRef.current)
+      }
     }
   }, [])
+
+  useEffect(() => {
+    if (!socketBaseUrl) return
+
+    const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(socketBaseUrl, {
+      transports: ['websocket', 'polling'],
+      autoConnect: true,
+    })
+    socketRef.current = socket
+
+    socket.on('connect', () => {
+      setSocketConnected(true)
+      socket.emit('meeting:join', { meetingId: MEETING_ID, participant: DEFAULT_CURRENT_USER })
+      socket.emit('webrtc:peer-ready', { meetingId: MEETING_ID, fromUserId: DEFAULT_CURRENT_USER.id })
+    })
+
+    socket.on('disconnect', () => {
+      setSocketConnected(false)
+      setRemoteTypingUserIds([])
+    })
+
+    socket.on('meeting:history', (payload) => {
+      if (payload.meetingId !== MEETING_ID) return
+      if (payload.messages.length > 0) {
+        setMessages(payload.messages)
+      }
+    })
+
+    socket.on('meeting:participants', (payload) => {
+      if (payload.meetingId !== MEETING_ID) return
+      setParticipants(payload.participants)
+    })
+
+    socket.on('meeting:user-joined', (payload) => {
+      if (payload.meetingId !== MEETING_ID) return
+      setParticipants((previous) => {
+        const alreadyExists = previous.some((participant) => participant.id === payload.participant.id)
+        if (alreadyExists) return previous
+        return [...previous, payload.participant]
+      })
+      setMessages((previous) => [
+        ...previous,
+        {
+          id: crypto.randomUUID(),
+          senderId: null,
+          type: 'system',
+          text: `${payload.participant.name} joined the meeting`,
+          createdAt: new Date().toISOString(),
+        },
+      ])
+    })
+
+    socket.on('meeting:user-left', (payload) => {
+      if (payload.meetingId !== MEETING_ID) return
+      setParticipants((previous) =>
+        previous.map((participant) =>
+          participant.id === payload.userId ? { ...participant, online: false } : participant
+        )
+      )
+      setRemoteTypingUserIds((previous) => previous.filter((userId) => userId !== payload.userId))
+    })
+
+    socket.on('meeting:chat', (payload) => {
+      if (payload.meetingId !== MEETING_ID) return
+      setMessages((previous) => {
+        const alreadyExists = previous.some((message) => message.id === payload.message.id)
+        if (alreadyExists) return previous
+        return [...previous, payload.message]
+      })
+    })
+
+    socket.on('meeting:typing', (payload) => {
+      if (payload.meetingId !== MEETING_ID || payload.userId === CURRENT_USER_ID) return
+      setRemoteTypingUserIds((previous) => {
+        if (payload.isTyping) {
+          if (previous.includes(payload.userId)) return previous
+          return [...previous, payload.userId]
+        }
+        return previous.filter((userId) => userId !== payload.userId)
+      })
+    })
+
+    socket.on('meeting:raise-hand', (payload) => {
+      if (payload.meetingId !== MEETING_ID) return
+      setMessages((previous) => [
+        ...previous,
+        {
+          id: crypto.randomUUID(),
+          senderId: null,
+          type: 'system',
+          text: `${payload.userName} raised a hand`,
+          createdAt: new Date().toISOString(),
+        },
+      ])
+    })
+
+    socket.on('webrtc:peer-ready', (payload) => {
+      if (payload.meetingId !== MEETING_ID) return
+      setLastSignalEvent(`Peer ready from ${payload.fromUserId}`)
+    })
+
+    socket.on('webrtc:offer', (payload) => {
+      if (payload.meetingId !== MEETING_ID) return
+      setLastSignalEvent(`Offer received from ${payload.fromUserId}`)
+    })
+
+    socket.on('webrtc:answer', (payload) => {
+      if (payload.meetingId !== MEETING_ID) return
+      setLastSignalEvent(`Answer received from ${payload.fromUserId}`)
+    })
+
+    socket.on('webrtc:ice-candidate', (payload) => {
+      if (payload.meetingId !== MEETING_ID) return
+      setLastSignalEvent(`ICE candidate from ${payload.fromUserId}`)
+    })
+
+    return () => {
+      if (socket.connected) {
+        socket.emit('meeting:leave', { meetingId: MEETING_ID, userId: DEFAULT_CURRENT_USER.id })
+      }
+      socket.removeAllListeners()
+      socket.disconnect()
+      socketRef.current = null
+    }
+  }, [])
+
+  const emitTypingState = (isTyping: boolean) => {
+    if (!isRealtimeConnected || !socketRef.current) return
+    socketRef.current.emit('meeting:typing', {
+      meetingId: MEETING_ID,
+      userId: currentUser.id,
+      isTyping,
+    })
+  }
+
+  const handleInputChange = (nextValue: string) => {
+    setInput(nextValue)
+    if (!isRealtimeConnected) return
+
+    emitTypingState(nextValue.trim().length > 0)
+    if (typingTimeoutRef.current) {
+      window.clearTimeout(typingTimeoutRef.current)
+    }
+    typingTimeoutRef.current = window.setTimeout(() => {
+      emitTypingState(false)
+    }, 1400)
+  }
 
   const sendMessage = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -172,6 +393,19 @@ export default function LiveMeetingChatPage() {
     }
     setMessages((previous) => [...previous, userMessage])
     setInput('')
+
+    if (typingTimeoutRef.current) {
+      window.clearTimeout(typingTimeoutRef.current)
+    }
+    emitTypingState(false)
+
+    if (isRealtimeConnected && socketRef.current) {
+      socketRef.current.emit('meeting:chat', {
+        meetingId: MEETING_ID,
+        message: userMessage,
+      })
+      return
+    }
 
     if (replyTimeoutRef.current) {
       window.clearTimeout(replyTimeoutRef.current)
@@ -199,11 +433,38 @@ export default function LiveMeetingChatPage() {
     setInput('')
     setMessageType('message')
     setMessages(INITIAL_MESSAGES)
+    setParticipants(PARTICIPANTS)
+    setRemoteTypingUserIds([])
     localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_MESSAGES))
   }
 
-  const onlineCount = PARTICIPANTS.filter((participant) => participant.online).length
+  const raiseHand = () => {
+    if (isRealtimeConnected && socketRef.current) {
+      socketRef.current.emit('meeting:raise-hand', {
+        meetingId: MEETING_ID,
+        userId: currentUser.id,
+        userName: currentUser.name,
+      })
+      return
+    }
+
+    setMessages((previous) => [
+      ...previous,
+      {
+        id: crypto.randomUUID(),
+        senderId: null,
+        type: 'system',
+        text: `${currentUser.name} raised a hand`,
+        createdAt: new Date().toISOString(),
+      },
+    ])
+  }
+
+  const onlineCount = participants.filter((participant) => participant.online).length
   const questionCount = messages.filter((message) => message.type === 'question').length
+  const activeTypingNames = participants
+    .filter((participant) => remoteTypingUserIds.includes(participant.id))
+    .map((participant) => participant.name)
 
   return (
     <main className="min-h-screen gradient-bg px-4 py-6 text-white">
@@ -219,6 +480,13 @@ export default function LiveMeetingChatPage() {
             </span>
             <span className="rounded-full bg-white/10 px-3 py-1">
               Session {formatElapsed(elapsedSeconds)}
+            </span>
+            <span
+              className={`rounded-full px-3 py-1 ${
+                isRealtimeConnected ? 'bg-emerald-500/20 text-emerald-200' : 'bg-amber-500/20 text-amber-200'
+              }`}
+            >
+              {isRealtimeConnected ? 'Socket connected' : socketBaseUrl ? 'Socket reconnecting' : 'Local mode'}
             </span>
             <span className="rounded-full bg-white/10 px-3 py-1">{onlineCount} online</span>
             <span className="rounded-full bg-white/10 px-3 py-1">{questionCount} questions</span>
@@ -243,8 +511,9 @@ export default function LiveMeetingChatPage() {
           <aside className="NavBG rounded-2xl border border-white/10 p-4">
             <h2 className="text-lg font-semibold">Participants</h2>
             <p className="mt-1 text-sm text-white/70">Current identity: {currentUser.name}</p>
+            <p className="mt-1 text-xs text-white/60">Last signal: {lastSignalEvent}</p>
             <div className="mt-4 space-y-2">
-              {PARTICIPANTS.map((participant) => (
+              {participants.map((participant) => (
                 <div
                   key={participant.id}
                   className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2"
@@ -300,6 +569,11 @@ export default function LiveMeetingChatPage() {
                   {instructor.name} is typing...
                 </div>
               ) : null}
+              {activeTypingNames.length > 0 ? (
+                <div className="mr-auto max-w-[85%] rounded-2xl bg-white/10 p-3 text-sm text-white/80">
+                  {activeTypingNames.join(', ')} typing...
+                </div>
+              ) : null}
 
               <div ref={messagesEndRef} />
             </div>
@@ -329,7 +603,7 @@ export default function LiveMeetingChatPage() {
                 <textarea
                   rows={2}
                   value={input}
-                  onChange={(event) => setInput(event.target.value)}
+                  onChange={(event) => handleInputChange(event.target.value)}
                   placeholder={
                     messageType === 'question'
                       ? 'Ask a question to the instructor...'
@@ -352,6 +626,7 @@ export default function LiveMeetingChatPage() {
             <h2 className="text-lg font-semibold">Quick Actions</h2>
             <button
               type="button"
+              onClick={raiseHand}
               className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm font-medium hover:bg-white/10"
             >
               <Hand size={16} />
@@ -374,7 +649,9 @@ export default function LiveMeetingChatPage() {
               ))}
             </div>
             <div className="mt-4 rounded-xl border border-white/10 bg-black/20 p-3 text-xs text-white/70">
-              Messages are local to this browser session in frontend mode. No API or websocket is connected yet.
+              {socketBaseUrl
+                ? 'Socket events are wired for chat, participants, raise hand, and WebRTC signaling.'
+                : 'Set NEXT_PUBLIC_SOCKET_URL to enable Socket.IO + WebRTC signaling event wiring.'}
             </div>
           </aside>
         </section>
