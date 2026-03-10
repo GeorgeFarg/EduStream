@@ -1,6 +1,7 @@
 'use server'
 
 import { apiBaseUrl } from '@/config/env';
+import { useLoginStore } from '@/store';
 import { loginReturnAction } from '@/types/login-return';
 import { post } from '@/util/api';
 import { z } from 'zod'
@@ -63,11 +64,17 @@ export const LoginAction = async (state: any, formData: FormData): Promise<login
                     ...rawFormData
                 }
             }
-        } else
-            return {
+        } else {
+            const { setLogin } = useLoginStore();
+            const data: loginReturnAction = {
                 success: true,
                 data: result
             }
+
+            setLogin(result.data.token, result.data.user.email)
+
+            return data;
+        }
     } catch (error: any) {
         return {
             errors: {
