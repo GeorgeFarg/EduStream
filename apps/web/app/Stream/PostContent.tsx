@@ -204,7 +204,7 @@ const PostContent = ({ onClose }: PostContentProps) => {
             <FiList size={20} />
           </button>
 
-          <div className="h-6 w-[1px] bg-zinc-300 mx-2"></div>
+          <div className="h-6 w-px bg-zinc-300 mx-2"></div>
 
           <button
             type="button"
