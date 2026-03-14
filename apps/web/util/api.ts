@@ -18,7 +18,10 @@ export async function get<T = any>(
   config: AxiosRequestConfig = {},
 ): Promise<ApiResult<T>> {
   try {
-    const response: AxiosResponse<T> = await axios.get(url, config);
+    const response: AxiosResponse<T> = await axios.get(url, {
+      withCredentials: true,
+      ...config,
+    });
     return { ok: true, data: response.data, error: null };
   } catch (error: any) {
     const message =
@@ -36,7 +39,10 @@ export async function post<T = any>(
   config: AxiosRequestConfig = {},
 ): Promise<ApiResult<T>> {
   try {
-    const response: AxiosResponse<T> = await axios.post(url, body, config);
+    const response: AxiosResponse<T> = await axios.post(url, body, {
+      withCredentials: true,
+      ...config,
+    });
     return { ok: true, data: response.data, error: null };
   } catch (error: any) {
     const message =
@@ -54,7 +60,10 @@ export async function update<T = any>(
   config: AxiosRequestConfig = {},
 ): Promise<ApiResult<T>> {
   try {
-    const response: AxiosResponse<T> = await axios.put(url, body, config);
+    const response: AxiosResponse<T> = await axios.put(url, body, {
+      withCredentials: true,
+      ...config,
+    });
     return { ok: true, data: response.data, error: null };
   } catch (error: any) {
     const message =
@@ -71,7 +80,10 @@ export async function del<T = any>(
   config: AxiosRequestConfig = {},
 ): Promise<ApiResult<T>> {
   try {
-    const response: AxiosResponse<T> = await axios.delete(url, config);
+    const response: AxiosResponse<T> = await axios.delete(url, {
+      withCredentials: true,
+      ...config,
+    });
     return { ok: true, data: response.data, error: null };
   } catch (error: any) {
     const message =

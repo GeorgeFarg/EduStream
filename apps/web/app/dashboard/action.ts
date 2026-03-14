@@ -3,6 +3,7 @@
 import { apiBaseUrl } from '@/config/env';
 import { CreateClassReturnAction, JoinClassReturnAction } from '@/types/classroom-return';
 import { post } from '@/util/api';
+import { cookies } from 'next/headers';
 import { z } from 'zod';
 
 // ─── Validation schemas ────────────────────────────────────────────────────────
@@ -38,7 +39,8 @@ export const CreateClassAction = async (
     }
 
     const endpoint = `${apiBaseUrl}/api/classes`;
-
+    const cookieStore = await cookies();
+    const session = cookieStore.get("session")?.value;
     try {
         const result = await post<{
             id: number;
@@ -51,6 +53,8 @@ export const CreateClassAction = async (
         }>(endpoint, {
             name: rawFormData.name,
             description: rawFormData.description,
+        }, {
+            headers: session ? { Cookie: `session=${session}` } : {},
         });
 
         if (!result.ok) {

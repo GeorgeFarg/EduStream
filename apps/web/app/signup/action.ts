@@ -3,6 +3,7 @@
 import { apiBaseUrl } from '@/config/env'
 import { signupReturnAction } from '@/types/signup-return';
 import { post } from '@/util/api'
+import { cookies } from 'next/headers';
 import toast from 'react-hot-toast';
 import { success, z } from 'zod'
 
@@ -83,6 +84,8 @@ export const SignupAction = async (state: any, formData: FormData): Promise<sign
                 }
             }
         } else {
+            (await cookies()).set('session', result.data.token);
+
             return {
                 success: true,
                 data: result,

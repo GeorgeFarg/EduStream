@@ -27,6 +27,7 @@ model User {
   assignments   Assignment[]
   submissions   Submission[]
   ownedClasses  Class[] // Classes created by this user
+  sessions      Session[]
   
   @@index([email])
 }
@@ -156,4 +157,16 @@ model Submission {
   @@unique([assignmentId, studentId])
   @@index([assignmentId])
   @@index([studentId])
+}
+
+model Session {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([userId])
+  @@index([expiresAt])
 }

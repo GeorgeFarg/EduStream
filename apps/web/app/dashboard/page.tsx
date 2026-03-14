@@ -3,27 +3,27 @@
 
 import { Classroom } from "@/types/classroom-return";
 import DashboardClient from "@/components/dashboard/DashboardClient";
-import { get } from "@/util/api";
+import { apiBaseUrl } from "@/config/env";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 async function getClassrooms(): Promise<Classroom[]> {
-  // process.env is safe here because this runs only on the server
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
+  "use server"
   if (!apiBaseUrl) return [];
 
   try {
-    // const res = await fetch(`${apiBaseUrl}/api/classes`, {
-    //   headers: {
-    //     authorization: `bearer ${"Asd"}`,
-    //   },
-    //   // Revalidate every 0 seconds = always fresh (like useEffect fetch)
-    //   cache: "no-store",
-    // });
+    const cookieStore = await cookies();
+    const session = cookieStore.get("session")?.value;
 
-    const res = await get<{}>(`${apiBaseUrl}/api/classes`);
-    console.log("Classes", res.data);
+    const res = await fetch(`${apiBaseUrl}/api/classes`, {
+      cache: "no-store",
+      headers: session ? { Cookie: `session=${session}` } : {},
+    });
+
     if (!res.ok) return [];
-    const data = await res.json();
-    return Array.isArray(data) ? data : [];
+
+    const data: unknown = await res.json();
+    return Array.isArray(data) ? (data as Classroom[]) : [];
   } catch {
     return [];
   }
@@ -31,6 +31,13 @@ async function getClassrooms(): Promise<Classroom[]> {
 
 // This is the Next.js page — it's a Server Component by default (no 'use client')
 export default async function DashboardPage() {
+  const cookieStore = await cookies();
+  const session = cookieStore.has("session");
+
+  if (!session) {
+    redirect("/login");
+  }
+
   const initialClassrooms = await getClassrooms();
 
   // Pass the fetched data to the client component that handles all interactivity

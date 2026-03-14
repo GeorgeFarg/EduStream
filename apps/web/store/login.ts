@@ -1,45 +1,51 @@
 import { create } from "zustand";
 
+/*
+Session-based login workflow:
+
+- Token/auth info is *not* stored in localStorage.
+- Authentication state is determined by the presence of a session cookie, managed server-side (via httpOnly cookie).
+- Client can "optimistically" track login UI state for client-side navigation, but 'real' auth is enforced server-side.
+- For SSR routes, redirects happen if session is missing. For client, logout clears optimistic state (if any), and can trigger a reload to refresh session validation.
+
+This store now only tracks local login UI state (optimistic). "Session" is not managed in localStorage!
+
+*/
+
 interface LoginStore {
-  token: string | null;
-  email: string | null;
   isLoggedIn: boolean;
-  setLogin: (token: string, email: string) => void;
+  setLogin: (token: string) => void;
   logout: () => void;
 }
 
-// Get initial state from localStorage
-const getInitialState = () => {
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("token");
-    const email = localStorage.getItem("email");
-    return {
-      token: token,
-      email: email,
-      isLoggedIn: !!token,
-    };
+// Helper that (optionally) checks for the session cookie in browser
+const hasSession = () => {
+  if (typeof document === "undefined") {
+    return false;
   }
-  return {
-    token: null,
-    email: null,
-    isLoggedIn: false,
-  };
+  return document.cookie.split(";").some((pair) => pair.trim().startsWith("session="));
 };
+
+// Get initial state
+const getInitialState = () => ({
+  isLoggedIn: typeof document !== "undefined" ? hasSession() : false,
+});
 
 export const useLoginStore = create<LoginStore>((set) => ({
   ...getInitialState(),
-  setLogin: (token: string, email: string) => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("token", token);
-      localStorage.setItem("email", email);
-    }
-    set({ token, email, isLoggedIn: true });
+
+  // setLogin: can be called after API login to optimistically update state/UI
+  setLogin: (token: string) => {
+    // cookieStore.set('session', token)
+    set({ isLoggedIn: true });
   },
+
+  // logout: client-side, removes optimistic state and can trigger reload (session cookie will be cleared by the server endpoint)
   logout: () => {
+    set({ isLoggedIn: false });
     if (typeof window !== "undefined") {
-      localStorage.removeItem("token");
-      localStorage.removeItem("email");
+      // Optionally: force reload to update session validation across app
+      window.location.reload();
     }
-    set({ token: null, email: null, isLoggedIn: false });
   },
 }));

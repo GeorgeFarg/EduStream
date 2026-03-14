@@ -13,6 +13,8 @@ import PasswordInput from '@/components/ui/PasswordInput'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { gsap } from 'gsap'
+import { useLoginStore } from '@/store'
+import { stat } from 'fs'
 
 const initialState: loginReturnAction = {
     errors: {},
@@ -29,6 +31,7 @@ const LoginPage = () => {
     const [state, formAction, pending] = useActionState(LoginAction, initialState)
 
     const [SuccessFullLogin, setSuccessFullLogin] = useState(false)
+    const setLogin = useLoginStore(state => state.setLogin)
 
     const audio = useRef<HTMLAudioElement | null>(null)
 
@@ -63,6 +66,7 @@ const LoginPage = () => {
     useEffect(() => {
         let timeoutId: NodeJS.Timeout;
         if (!!state.success) {
+            setLogin(state.data?.data.token!)
             if (audio.current)
                 audio.current.play();
             setSuccessFullLogin(true);
@@ -110,7 +114,7 @@ const LoginPage = () => {
 
             if (timeoutId) clearTimeout(timeoutId);
         };
-    }, [state.success]);
+    }, [state.success, setLogin]);
 
     return (
         <div className="min-h-screen gradient-bg dark:bg-dark bg-slate-50 flex flex-col items-center justify-center px-4 py-8 relative">
