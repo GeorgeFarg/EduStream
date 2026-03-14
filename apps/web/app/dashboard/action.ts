@@ -104,7 +104,8 @@ export const JoinClassAction = async (
     }
 
     const endpoint = `${apiBaseUrl}/api/classes/join`;
-
+    const cookieStore = await cookies();
+    const session = cookieStore.get("session")?.value;
     try {
         const result = await post<{
             message: string;
@@ -117,7 +118,9 @@ export const JoinClassAction = async (
                 createdAt: string;
                 updatedAt: string;
             };
-        }>(endpoint, { code: rawFormData.code });
+        }>(endpoint, { code: rawFormData.code }, {
+            headers: session ? { Cookie: `session=${session}` } : {},
+        });
 
         if (!result.ok) {
             return {

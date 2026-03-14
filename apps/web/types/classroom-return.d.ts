@@ -9,43 +9,48 @@ export type Classroom = {
     updatedAt: string;
 };
 
+export type ClassRoom_return = {
+    classes: Classroom[],
+    userId: number
+}
+
 // Return type for the "Create Class" server action
 export type CreateClassReturnAction =
     | {
-          success: false;
-          errors: {
-              name?: string[];
-              description?: string[];
-              api?: string;
-              Errorcode?: number;
-          };
-          values: {
-              name: string;
-              description: string;
-          };
-      }
+        success: false;
+        errors: {
+            name?: string[];
+            description?: string[];
+            api?: string;
+            Errorcode?: number;
+        };
+        values: {
+            name: string;
+            description: string;
+        };
+    }
     | {
-          success: true;
-          data: Classroom;
-      };
+        success: true;
+        data: Classroom;
+    };
 
 // Return type for the "Join Class" server action
 export type JoinClassReturnAction =
     | {
-          success: false;
-          errors: {
-              code?: string[];
-              api?: string;
-              Errorcode?: number;
-          };
-          values: {
-              code: string;
-          };
-      }
+        success: false;
+        errors: {
+            code?: string[];
+            api?: string;
+            Errorcode?: number;
+        };
+        values: {
+            code: string;
+        };
+    }
     | {
-          success: true;
-          data: {
-              message: string;
-              class: Classroom;
-          };
-      };
+        success: true;
+        data: {
+            message: string;
+            class: Classroom;
+        };
+    };

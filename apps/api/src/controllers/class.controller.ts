@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib/prisma";
 import { generateClassCode } from "../utils/codeGenerator";
 import { ClassRole } from "../generated/prisma/client";
+import type { USER_TYPE } from "../types/user";
 
 export const createClass = async (
   req: Request,
@@ -10,8 +11,7 @@ export const createClass = async (
 ) => {
   try {
     const { name, description } = req.body;
-    console.log("User: ", (req as any).user);
-    const userId = (req as any).user.userId;
+    const { id: userId } = (req as any).user as USER_TYPE;
 
     // Generate unique code
     let code = generateClassCode();
@@ -43,6 +43,55 @@ export const createClass = async (
   }
 };
 
+
+export const getClasses = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    let { id: userId } = (req as any).user as USER_TYPE;
+
+    let classes = await prisma.class.findMany({
+      where: {
+        members: {
+          every: {
+            userId,
+          }
+        }
+      },
+      include: {
+        members: {
+          select: {
+            userId: true,
+            role: true
+          }
+        },
+      }
+    });
+
+    if (!classes.length) {
+      return res.status(404).json({
+        error: {
+          message: "No classes found",
+          code: "NOT FOUND"
+        }
+      });
+    }
+
+    res.json({ classes, userId });
+
+  } catch (err) {
+    res.status(500).json({
+      error: {
+        message: "Server error",
+        code: "SERVERERROR",
+      },
+    })
+  }
+}
+
+
 export const joinClass = async (
   req: Request,
   res: Response,
@@ -50,7 +99,7 @@ export const joinClass = async (
 ) => {
   try {
     const { code } = req.body;
-    const userId = (req as any).user.userId;
+    const { id: userId } = (req as any).user as USER_TYPE;
 
     const classToJoin = await prisma.class.findUnique({
       where: { code },
@@ -70,7 +119,11 @@ export const joinClass = async (
     });
 
     if (existingMember) {
-      return res.status(400).json({ error: "Already a member of this class" });
+      return res.status(400).json({
+        error: {
+          message: "Already a member of this class"
+        }
+      });
     }
 
     await prisma.classMembership.create({

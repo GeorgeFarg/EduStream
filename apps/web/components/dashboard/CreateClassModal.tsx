@@ -33,8 +33,9 @@ const CreateClassModal = ({ isOpen, onClose, onSuccess }: Props) => {
         state,
         pending,
         onSuccess: () => {
-            toast.success('Class created successfully!')
-            onSuccess()
+            toast.success('Class created successfully!', {
+                id: "create class"
+            })
             onClose()
         },
         onError: () => {
@@ -46,6 +47,13 @@ const CreateClassModal = ({ isOpen, onClose, onSuccess }: Props) => {
             }
         },
     })
+
+    useEffect(() => {
+        if (state.success) {
+            onSuccess()
+        }
+
+    }, [state])
 
     // Close modal on Escape key
     useEffect(() => {

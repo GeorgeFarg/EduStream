@@ -1,5 +1,7 @@
 import React from 'react'
 import { MoreVertical } from 'lucide-react'
+import Badge from '../ui/badge'
+
 import { Classroom } from '@/types/classroom-return'
 
 // ─── Card gradient palette ──────────────────────────────────────────────────────
@@ -14,32 +16,47 @@ const gradients = [
     'from-purple-500 to-violet-700',
 ]
 
+const badgeColors: string[] = [
+    'bg-violet-100 text-violet-700',
+    'bg-blue-100 text-blue-700',
+    'bg-emerald-100 text-emerald-700',
+    'bg-orange-100 text-orange-700',
+    'bg-pink-100 text-pink-700',
+    'bg-purple-100 text-purple-700'
+
+]
+
 // ─── Props ──────────────────────────────────────────────────────────────────────
 
 type Props = {
     classroom: Classroom
-    index: number
+    index: number,
+    isOwner: boolean
 }
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
-const ClassroomCard = ({ classroom, index }: Props) => {
+const ClassroomCard = ({ classroom, index, isOwner }: Props) => {
     const gradient = gradients[index % gradients.length]
+    const badgeColor: string = badgeColors[index % badgeColors.length] ?? ''
 
     return (
         <div className="bg-white dark:bg-[#1a1a2e] rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-md transition-shadow duration-200">
 
             {/* Coloured header strip */}
-            <div className={`bg-gradient-to-r ${gradient} px-5 py-4 flex items-start justify-between`}>
+            <div className={`bg-linear-to-r ${gradient} px-5 py-4 flex items-start justify-between`}>
                 <div>
                     <h3 className="text-white font-bold text-base leading-tight">{classroom.name}</h3>
                     {classroom.description && (
                         <p className="text-white/70 text-xs mt-0.5 truncate max-w-[200px]">{classroom.description}</p>
                     )}
                 </div>
-                <button className="text-white/70 hover:text-white transition-colors mt-0.5">
-                    <MoreVertical className="w-4 h-4" />
-                </button>
+                <div>
+                    {isOwner && <Badge badgeColor={badgeColor} text={'Owner'} />}
+                    <button className="text-white/70 hover:text-white transition-colors mt-0.5">
+                        <MoreVertical className="w-4 h-4" />
+                    </button>
+                </div>
             </div>
 
             {/* Card body */}
@@ -56,9 +73,9 @@ const ClassroomCard = ({ classroom, index }: Props) => {
                 <div className="flex items-center justify-between">
                     {/* Placeholder avatars (will be real members in a future update) */}
                     <div className="flex -space-x-2">
-                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-300 to-pink-400 border-2 border-white dark:border-[#1a1a2e]" />
-                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-300 to-indigo-400 border-2 border-white dark:border-[#1a1a2e]" />
-                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-300 to-teal-400 border-2 border-white dark:border-[#1a1a2e] flex items-center justify-center">
+                        <div className="w-7 h-7 rounded-full bg-linear-to-br from-orange-300 to-pink-400 border-2 border-white dark:border-[#1a1a2e]" />
+                        <div className="w-7 h-7 rounded-full bg-linear-to-br from-blue-300 to-indigo-400 border-2 border-white dark:border-[#1a1a2e]" />
+                        <div className="w-7 h-7 rounded-full bg-linear-to-br from-emerald-300 to-teal-400 border-2 border-white dark:border-[#1a1a2e] flex items-center justify-center">
                             <span className="text-[9px] font-bold text-white">+</span>
                         </div>
                     </div>

@@ -1,15 +1,15 @@
 // ─── Server Component (no 'use client') ────────────────────────────────────────
 // Data fetching happens here on the server, so dotenv / 'fs' never touch the browser.
 
-import { Classroom } from "@/types/classroom-return";
+import { ClassRoom_return } from "@/types/classroom-return";
 import DashboardClient from "@/components/dashboard/DashboardClient";
 import { apiBaseUrl } from "@/config/env";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-async function getClassrooms(): Promise<Classroom[]> {
+async function getClassrooms(): Promise<ClassRoom_return> {
   "use server"
-  if (!apiBaseUrl) return [];
+  if (!apiBaseUrl) throw new Error("something wrong");
 
   try {
     const cookieStore = await cookies();
@@ -20,12 +20,15 @@ async function getClassrooms(): Promise<Classroom[]> {
       headers: session ? { Cookie: `session=${session}` } : {},
     });
 
-    if (!res.ok) return [];
+    if (!res.ok) {
+      console.log("SOMETHING IS WRONG")
+      throw new Error("something wrong")
+    };
 
-    const data: unknown = await res.json();
-    return Array.isArray(data) ? (data as Classroom[]) : [];
+    const data: ClassRoom_return = await res.json();
+    return data;
   } catch {
-    return [];
+    throw new Error("something wrong");
   }
 }
 

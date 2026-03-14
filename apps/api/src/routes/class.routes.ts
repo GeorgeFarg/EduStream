@@ -1,11 +1,12 @@
 import { Router } from 'express';
-import { createClass, joinClass, inviteClass } from '../controllers/class.controller';
+import { createClass, joinClass, inviteClass, getClasses } from '../controllers/class.controller';
 import { isTeacherInClass } from '../middleware/classAuth';
 
 const router = Router();
 
 // Create a new class
 router.post('/', createClass);
+router.get('/', getClasses);
 
 // Join a class using code
 router.post('/join', joinClass);

@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Plus, BookOpen, Hash, Moon, Grid3X3 } from 'lucide-react'
-import { Classroom } from '@/types/classroom-return'
+import { Classroom, ClassRoom_return } from '@/types/classroom-return'
 import ClassroomCard from '@/components/dashboard/ClassroomCard'
 import CreateClassModal from '@/components/dashboard/CreateClassModal'
 import JoinClassModal from '@/components/dashboard/JoinClassModal'
+import { apiBaseUrl } from '@/config/env'
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
@@ -13,23 +14,27 @@ type ModalType = 'create' | 'join' | null
 
 type Props = {
     // Initial classrooms fetched on the server — no browser fetch needed on first load
-    initialClassrooms: Classroom[]
+    initialClassrooms: ClassRoom_return
 }
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 const DashboardClient = ({ initialClassrooms }: Props) => {
-    const [classrooms, setClassrooms] = useState<Classroom[]>(initialClassrooms)
-    const [openModal, setOpenModal]   = useState<ModalType>(null)
+    const [classrooms, setClassrooms] = useState<Classroom[]>(initialClassrooms.classes)
+    const [openModal, setOpenModal] = useState<ModalType>(null)
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
+
+    let { userId } = initialClassrooms;
 
     // ── Refresh list after create/join (client-side, safe — no dotenv) ────────
 
     const refreshClassrooms = useCallback(async () => {
         try {
+
+            closeModal()
             // NEXT_PUBLIC_ variables are embedded at build time, safe in the browser
-            const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL
+            // const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL
             const res = await fetch(`${apiBaseUrl}/api/classes`, { credentials: 'include' })
             if (res.ok) {
                 const data = await res.json()
@@ -55,8 +60,8 @@ const DashboardClient = ({ initialClassrooms }: Props) => {
     // ── Modal helpers ─────────────────────────────────────────────────────────
 
     const openCreateModal = () => { setDropdownOpen(false); setOpenModal('create') }
-    const openJoinModal   = () => { setDropdownOpen(false); setOpenModal('join')   }
-    const closeModal      = () => setOpenModal(null)
+    const openJoinModal = () => { setDropdownOpen(false); setOpenModal('join') }
+    const closeModal = () => setOpenModal(null)
 
     // ── Render ────────────────────────────────────────────────────────────────
 
@@ -77,7 +82,7 @@ const DashboardClient = ({ initialClassrooms }: Props) => {
                     <button className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all">
                         <Grid3X3 className="w-4 h-4" />
                     </button>
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 cursor-pointer" />
+                    <div className="w-8 h-8 rounded-full bg-linear-to-br from-orange-400 to-pink-500 cursor-pointer" />
                 </div>
             </header>
 
@@ -106,7 +111,7 @@ const DashboardClient = ({ initialClassrooms }: Props) => {
                                     onClick={openCreateModal}
                                     className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                                 >
-                                    <BookOpen className="w-4 h-4 text-main flex-shrink-0" />
+                                    <BookOpen className="w-4 h-4 text-main shrink-0" />
                                     Create Class
                                 </button>
                                 <div className="mx-4 border-t border-slate-100 dark:border-white/10" />
@@ -114,7 +119,7 @@ const DashboardClient = ({ initialClassrooms }: Props) => {
                                     onClick={openJoinModal}
                                     className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                                 >
-                                    <Hash className="w-4 h-4 text-main flex-shrink-0" />
+                                    <Hash className="w-4 h-4 text-main shrink-0" />
                                     Join Class
                                 </button>
                             </div>
@@ -150,23 +155,23 @@ const DashboardClient = ({ initialClassrooms }: Props) => {
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                         {classrooms.map((classroom, index) => (
-                            <ClassroomCard key={classroom.id} classroom={classroom} index={index} />
+                            <ClassroomCard key={classroom.id} isOwner={userId === classroom.ownerId} classroom={classroom} index={index} />
                         ))}
                     </div>
                 )}
             </div>
 
             {/* ─── Modals ─────────────────────────────────────────────────────── */}
-            <CreateClassModal
+            {openModal === 'create' && <CreateClassModal
                 isOpen={openModal === 'create'}
                 onClose={closeModal}
                 onSuccess={refreshClassrooms}
-            />
-            <JoinClassModal
+            />}
+            {openModal === 'join' && <JoinClassModal
                 isOpen={openModal === 'join'}
                 onClose={closeModal}
                 onSuccess={refreshClassrooms}
-            />
+            />}
         </>
     )
 }
