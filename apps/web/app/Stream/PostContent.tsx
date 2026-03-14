@@ -69,16 +69,16 @@ const PostContent = ({ onClose }: PostContentProps) => {
       {/* Link Modal */}
       {showLinkModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div 
+          <div
             className="absolute inset-0 bg-black/30"
             onClick={() => setShowLinkModal(false)}
           />
-          
+
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 mx-4">
             <h3 className="text-xl font-semibold text-zinc-800 mb-4 text-center">
               Add Link
             </h3>
-            
+
             <input
               type="url"
               value={linkUrl}
@@ -88,7 +88,7 @@ const PostContent = ({ onClose }: PostContentProps) => {
               dir="ltr"
               autoFocus
             />
-            
+
             <div className="flex gap-3">
               <button
                 onClick={() => setShowLinkModal(false)}
@@ -110,16 +110,16 @@ const PostContent = ({ onClose }: PostContentProps) => {
       {/* YouTube Modal */}
       {showYoutubeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div 
+          <div
             className="absolute inset-0 bg-black/30"
             onClick={() => setShowYoutubeModal(false)}
           />
-          
+
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 mx-4">
             <h3 className="text-xl font-semibold text-zinc-800 mb-4 text-center">
               Add YouTube Video
             </h3>
-            
+
             <input
               type="url"
               value={youtubeUrl}
@@ -129,11 +129,11 @@ const PostContent = ({ onClose }: PostContentProps) => {
               dir="ltr"
               autoFocus
             />
-            
+
             <p className="text-xs text-zinc-500 mb-6 text-right">
               Example: https://youtube.com/watch?v=abcd1234
             </p>
-            
+
             <div className="flex gap-3">
               <button
                 onClick={() => setShowYoutubeModal(false)}
@@ -165,50 +165,50 @@ const PostContent = ({ onClose }: PostContentProps) => {
           spellCheck="false"
           data-placeholder="Write your announcement here..."
         ></div>
-        
+
         {/* Formatting Toolbar */}
         <div className="flex flex-row-reverse items-center gap-1 p-2 border-t border-zinc-200 bg-white/50 flex-wrap">
-          <button 
-            type="button" 
-            onClick={() => execCommand("bold")} 
-            className="p-2 hover:bg-zinc-200 rounded text-zinc-500 transition-colors" 
+          <button
+            type="button"
+            onClick={() => execCommand("bold")}
+            className="p-2 hover:bg-zinc-200 rounded text-zinc-500 transition-colors"
             title="Bold"
           >
             <FiBold size={20} />
           </button>
-          
-          <button 
-            type="button" 
-            onClick={() => execCommand("italic")} 
-            className="p-2 hover:bg-zinc-200 rounded text-zinc-500 transition-colors" 
+
+          <button
+            type="button"
+            onClick={() => execCommand("italic")}
+            className="p-2 hover:bg-zinc-200 rounded text-zinc-500 transition-colors"
             title="Italic"
           >
             <FiItalic size={20} />
           </button>
-          
-          <button 
-            type="button" 
-            onClick={() => execCommand("underline")} 
-            className="p-2 hover:bg-zinc-200 rounded text-zinc-500 transition-colors" 
+
+          <button
+            type="button"
+            onClick={() => execCommand("underline")}
+            className="p-2 hover:bg-zinc-200 rounded text-zinc-500 transition-colors"
             title="Underline"
           >
             <FiUnderline size={20} />
           </button>
-          
-          <button 
-            type="button" 
-            onClick={() => execCommand("insertUnorderedList")} 
-            className="p-2 hover:bg-zinc-200 rounded text-zinc-500 transition-colors" 
+
+          <button
+            type="button"
+            onClick={() => execCommand("insertUnorderedList")}
+            className="p-2 hover:bg-zinc-200 rounded text-zinc-500 transition-colors"
             title="Bullet List"
           >
             <FiList size={20} />
           </button>
-          
+
           <div className="h-6 w-[1px] bg-zinc-300 mx-2"></div>
-          
-          <button 
-            type="button" 
-            onClick={() => execCommand("removeFormat")} 
+
+          <button
+            type="button"
+            onClick={() => execCommand("removeFormat")}
             className="px-3 py-1 hover:bg-zinc-200 rounded text-zinc-500 text-sm font-medium"
           >
             Clear Format
@@ -220,42 +220,41 @@ const PostContent = ({ onClose }: PostContentProps) => {
       <div className="flex flex-row-reverse items-center justify-between flex-wrap gap-4">
         <div className="flex flex-row-reverse gap-3 flex-wrap">
           {/* Google Drive Button  */}
-          <button 
-            type="button" 
-            onClick={() => window.open('https://drive.google.com', '_blank')} 
-            className="w-11 h-11 flex items-center justify-center border border-zinc-200 rounded-full hover:bg-zinc-50 text-zinc-600 shadow-sm" 
+          <button
+            type="button"
+            onClick={() => window.open('https://drive.google.com', '_blank')}
+            className="w-11 h-11 flex items-center justify-center border border-zinc-200 rounded-full hover:bg-zinc-50 text-zinc-600 shadow-sm"
             title="Google Drive"
           >
             <SiGoogledrive size={18} />
           </button>
-          
+
           {/* YouTube Button */}
-          <button 
-            type="button" 
-            onClick={() => setShowYoutubeModal(true)} 
-            className="w-11 h-11 flex items-center justify-center border border-zinc-200 rounded-full hover:bg-zinc-50 text-zinc-600 shadow-sm" 
+          <button
+            type="button"
+            onClick={() => setShowYoutubeModal(true)}
+            className="w-11 h-11 flex items-center justify-center border border-zinc-200 rounded-full hover:bg-zinc-50 text-zinc-600 shadow-sm"
             title="YouTube"
           >
             <FiYoutube size={20} />
           </button>
-          
+
           {/* File Upload Button */}
           <div className="relative">
-            <button 
+            <button
               type="button"
-              onClick={() => fileInputRef.current?.click()} 
-              className={`w-11 h-11 flex items-center justify-center border rounded-full transition-all shadow-sm ${
-                selectedFile ? 'bg-blue-50 border-blue-200 text-blue-600' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'
-              }`}
+              onClick={() => fileInputRef.current?.click()}
+              className={`w-11 h-11 flex items-center justify-center border rounded-full transition-all shadow-sm ${selectedFile ? 'bg-blue-50 border-blue-200 text-blue-600' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'
+                }`}
               title="Attach File"
             >
               <FiUpload size={20} />
             </button>
-            
+
             {selectedFile && (
               <div className="absolute top-full mt-2 left-0 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-full flex items-center gap-2 whitespace-nowrap">
                 <span className="max-w-[150px] truncate">{selectedFile.name}</span>
-                <button 
+                <button
                   onClick={() => setSelectedFile(null)}
                   className="hover:text-red-600 transition-colors"
                 >
@@ -264,11 +263,11 @@ const PostContent = ({ onClose }: PostContentProps) => {
               </div>
             )}
           </div>
-          
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            className="hidden" 
+
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (file && file.size <= 5 * 1024 * 1024) {
@@ -279,10 +278,10 @@ const PostContent = ({ onClose }: PostContentProps) => {
           />
 
           {/* Link Button */}
-          <button 
-            type="button" 
-            onClick={() => setShowLinkModal(true)} 
-            className="w-11 h-11 flex items-center justify-center border border-zinc-200 rounded-full hover:bg-zinc-50 text-zinc-600 shadow-sm" 
+          <button
+            type="button"
+            onClick={() => setShowLinkModal(true)}
+            className="w-11 h-11 flex items-center justify-center border border-zinc-200 rounded-full hover:bg-zinc-50 text-zinc-600 shadow-sm"
             title="Add Link"
           >
             <FiLink size={20} />
@@ -291,7 +290,7 @@ const PostContent = ({ onClose }: PostContentProps) => {
 
         {/* Share Button*/}
         <div className="flex items-center gap-3">
-          <button 
+          <button
             type="button"
             className="px-10 py-2.5 rounded-full font-medium bg-[#1a73e8] text-white shadow-md hover:shadow-lg transition-all cursor-default opacity-80"
           >
