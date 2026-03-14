@@ -31,12 +31,12 @@ const badgeColors: string[] = [
 type Props = {
     classroom: Classroom
     index: number,
-    isOwner: boolean
+    userId: number
 }
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
-const ClassroomCard = ({ classroom, index, isOwner }: Props) => {
+const ClassroomCard = ({ classroom, index, userId }: Props) => {
     const gradient = gradients[index % gradients.length]
     const badgeColor: string = badgeColors[index % badgeColors.length] ?? ''
 
@@ -52,7 +52,7 @@ const ClassroomCard = ({ classroom, index, isOwner }: Props) => {
                     )}
                 </div>
                 <div>
-                    {isOwner && <Badge badgeColor={badgeColor} text={'Owner'} />}
+                    {userId === classroom.ownerId && <Badge badgeColor={badgeColor} text={'Owner'} />}
                     <button className="text-white/70 hover:text-white transition-colors mt-0.5">
                         <MoreVertical className="w-4 h-4" />
                     </button>

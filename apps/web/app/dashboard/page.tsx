@@ -23,7 +23,7 @@ async function getClassrooms(): Promise<ClassRoom_return> {
     if (res.status === 404)
       return {
         classes: [],
-        userId: 0
+        userId: (await res.json()).userId
       }
     throw new Error(res.status.toString())
   };

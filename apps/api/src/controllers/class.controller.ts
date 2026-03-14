@@ -55,7 +55,7 @@ export const getClasses = async (
     let classes = await prisma.class.findMany({
       where: {
         members: {
-          every: {
+          some: {
             userId,
           }
         }
@@ -75,7 +75,8 @@ export const getClasses = async (
         error: {
           message: "No classes found",
           code: "NOT FOUND"
-        }
+        },
+        userId
       });
     }
 
