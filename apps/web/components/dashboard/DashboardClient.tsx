@@ -38,7 +38,7 @@ const DashboardClient = ({ initialClassrooms }: Props) => {
             const res = await fetch(`${apiBaseUrl}/api/classes`, { credentials: 'include' })
             if (res.ok) {
                 const data = await res.json()
-                setClassrooms(Array.isArray(data) ? data : [])
+                setClassrooms(Array.isArray(data.classes) ? data.classes : [])
             }
         } catch {
             // toasts are handled inside the modals
