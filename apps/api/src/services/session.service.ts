@@ -35,15 +35,15 @@ export async function deleteSession(token: string) {
 
 
 export async function SET_CasheSession(token: string, user: USER_TYPE, seconds: number) {
-  await redisClient.setEx(token, seconds, JSON.stringify(user))
+  await redisClient.setex(token, seconds, JSON.stringify(user))
 }
 
 export async function GET_CasheSession(token: string): Promise<string | null> {
   let user = await redisClient.get(token)
   if (user == null) {
-    console.log("Cashe miss");
+    console.log("Cache miss");
   } else {
-    console.log("Cashe HIT");
+    console.log("Cache HIT");
   }
   return user
 }

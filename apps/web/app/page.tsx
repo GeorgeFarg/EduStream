@@ -1,79 +1,30 @@
-"use client";
-
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+'use client'
+import Hero from "@/components/sections/hero";
+import Features from "@/components/sections/features";
+import { Testimonials } from "@/components/sections/Testimonials";
+import Footer from "@/components/sections/footer";
+import NavBar from "@/components/NavBar";
+import { GIFtext } from "@/components/ui/GIFtext";
 
 export default function Home() {
-  const router = useRouter();
-  const [name, setName] = useState("");
-  const [roomId, setRoomId] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  // Function to create a new meeting
-  const createMeeting = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("http://localhost:5000/api/rooms", {
-        method: "POST",
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to create room");
-      }
-
-      const data = await res.json();
-      router.push(`/meeting?room=${data.roomId}&name=${name || "Guest"}`);
-    } catch (error) {
-      console.error("Error creating meeting:", error);
-      alert("Could not create meeting. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Function to join an existing meeting
-  const joinMeeting = () => {
-    if (!roomId.trim()) {
-      alert("Please enter a Room ID");
-      return;
-    }
-    router.push(`/meeting?room=${roomId}&name=${name || "Guest"}`);
-  };
-
   return (
-    <div style={{ padding: 40, maxWidth: 400, margin: "0 auto" }}>
-      <h1>NexMeet</h1>
-
-      <input
-        type="text"
-        placeholder="Your Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        style={{ width: "100%", padding: "8px", marginBottom: "16px" }}
-      />
-
-      <button
-        onClick={createMeeting}
-        style={{ width: "100%", padding: "10px", marginBottom: "24px" }}
-        disabled={loading}
-      >
-        {loading ? "Creating..." : "New Meeting"}
-      </button>
-
-      <input
-        type="text"
-        placeholder="Room ID"
-        value={roomId}
-        onChange={(e) => setRoomId(e.target.value)}
-        style={{ width: "100%", padding: "8px", marginBottom: "8px" }}
-      />
-
-      <button
-        onClick={joinMeeting}
-        style={{ width: "100%", padding: "10px" }}
-      >
-        Join Meeting
-      </button>
-    </div>
+    <>
+      <NavBar />
+      <Hero />
+      <Features />
+      <Testimonials />
+      {/* Small section not worth seperation */}
+      <div className="dark:bg-main py-20 px-6 text-center">
+        <h2 className="text-5xl font-bold text-center mt-5">Start Your Digital Transformation</h2>
+        <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto text-center mt-3">
+          Join over 500 universities modernizing their education delivery. Schedule a <GIFtext GifName="best-banana-cat.gif" width={70} height={70}>personalized</GIFtext> demo for your team today.
+        </p>
+        <div className="flex gap-6 justify-center">
+          <button className="bg-white text-main px-4 py-2 rounded-md font-bold">Contact Sales</button>
+          <button className="border px-4 py-2 rounded-md font-bold">View Prices</button>
+        </div>
+      </div>
+      <Footer />
+    </>
   );
 }

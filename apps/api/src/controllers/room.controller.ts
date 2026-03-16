@@ -1,33 +1,22 @@
 import type { Request, Response } from "express";
-import { rooms } from "../services/room.service";
+import { getRoomParticipants } from "../services/room.service";
 import { v4 as uuidv4 } from "uuid";
 
-export const createRoom = (req: Request, res: Response) => {
-
+export const createRoom = async (req: Request, res: Response) => {
   const roomId = uuidv4().slice(0, 8).toUpperCase();
-
-  rooms[roomId] = {
-    participants: {},
-    createdAt: Date.now()
-  };
-
-  console.log("[API] New room created:", roomId);
-
+  // Room created on first participant join via socket, or create empty Redis entry if needed
+  console.log("[API] New room prepared:", roomId);
   res.json({ roomId });
 };
 
-export const getRoom = (req: Request, res: Response) => {
-
+export const getRoom = async (req: Request, res: Response) => {
   const roomId = req.params.roomId as string;
-
-  if (!rooms[roomId]) {
-    return res.status(404).json({ error: "Room not found" });
+  const participants = await getRoomParticipants(roomId);
+  if (participants.length === 0) {
+    return res.status(404).json({ error: "Room not found or empty" });
   }
-
-  const count = Object.keys(rooms[roomId].participants).length;
-
   res.json({
     roomId,
-    participantCount: count
+    participantCount: participants.length
   });
 };

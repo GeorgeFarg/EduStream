@@ -1,5 +1,5 @@
 import { Server, Socket } from "socket.io";
-import { rooms } from "../services/room.service";
+import { addParticipant, removeParticipant, getRoomParticipants, getSocketRoom } from "../services/room.service";
 
 export const setupSocket = (io: Server) => {
 
@@ -7,42 +7,36 @@ export const setupSocket = (io: Server) => {
 
     console.log("[CONNECT]", socket.id);
 
-    socket.on("join-room", ({ roomId, userName }) => {
+    socket.on("join-room", async ({ roomId, userName }) => {
 
-      if (!rooms[roomId]) {
-        rooms[roomId] = { participants: {}, createdAt: Date.now() };
-      }
-
-      const room = rooms[roomId];
-
-      room.participants[socket.id] = {
-        name: userName || "Guest",
-        socketId: socket.id
+      const participant = {
+        name: userName || socket.data.user?.name || "Guest",
+        socketId: socket.id,
+        userId: socket.data.user?.id,
+        joinedAt: Date.now()
       };
+
+      await addParticipant(roomId, socket.id, participant);
 
       socket.join(roomId);
       socket.data.roomId = roomId;
-      socket.data.userName = userName;
 
-      const existingPeers = Object.entries(room.participants)
-        .filter(([id]) => id !== socket.id)
-        .map(([id, info]: any) => ({
-          socketId: id,
-          userName: info.name
-        }));
+      const participants = await getRoomParticipants(roomId);
+      const existingPeers = participants.filter(p => p.socketId !== socket.id);
 
       socket.emit("room-joined", {
         roomId,
         socketId: socket.id,
-        existingPeers,
-        participantCount: Object.keys(room.participants).length
+        existingPeers: existingPeers.map(p => ({ socketId: p.socketId, userName: p.name })),
+        participantCount: participants.length
       });
 
       socket.to(roomId).emit("user-joined", {
         socketId: socket.id,
-        userName
+        userName: participant.name
       });
 
+      console.log(`User joined room ${roomId}: ${participant.name}`);
     });
 
     socket.on("offer", ({ targetSocketId, offer, senderName }) => {
@@ -67,48 +61,28 @@ export const setupSocket = (io: Server) => {
       });
     });
 
-    socket.on("chat-message", ({ roomId, message }) => {
+    socket.on("chat-message", async ({ roomId, message }) => {
+      const participants = await getRoomParticipants(roomId);
+      const userName = participants.find(p => p.socketId === socket.id)?.name || "Guest";
 
-      const room = rooms[roomId];
-      const userName = room?.participants?.[socket.id]?.name || "Guest";
-
-      io.to(roomId).emit("chat-message", {
+      socket.to(roomId).emit("chat-message", {
         socketId: socket.id,
         userName,
         message,
         timestamp: Date.now()
       });
-
     });
 
-    socket.on("disconnect", () => {
+    socket.on("disconnect", async () => {
 
       const roomId = socket.data.roomId;
 
-      if (roomId && rooms[roomId]) {
-
-        delete rooms[roomId].participants[socket.id];
-
+      if (roomId) {
+        await removeParticipant(roomId, socket.id);
         socket.to(roomId).emit("user-left", {
           socketId: socket.id
         });
-
-        if (Object.keys(rooms[roomId].participants).length === 0) {
-
-          setTimeout(() => {
-
-            if (
-              rooms[roomId] &&
-              Object.keys(rooms[roomId].participants).length === 0
-            ) {
-              delete rooms[roomId];
-              console.log("[CLEANUP] Room deleted:", roomId);
-            }
-
-          }, 10000);
-
-        }
-
+        console.log(`User left room ${roomId}: ${socket.id}`);
       }
 
       console.log("[DISCONNECT]", socket.id);
