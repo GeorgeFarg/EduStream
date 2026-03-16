@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useActionState } from 'react'
+import React, { useActionState, useEffect, useRef, useState } from 'react'
 import Logo from '@/components/ui/Logo'
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
@@ -10,7 +10,11 @@ import { useToastAction } from '@/hooks/useToast'
 import toast from 'react-hot-toast'
 import Input from '@/components/ui/Input'
 import PasswordInput from '@/components/ui/PasswordInput'
-
+import Image from 'next/image'
+import { useRouter } from 'next/navigation'
+import { gsap } from 'gsap'
+import { useLoginStore } from '@/store'
+import { stat } from 'fs'
 
 const initialState: loginReturnAction = {
     errors: {},
@@ -23,17 +27,27 @@ const initialState: loginReturnAction = {
 }
 
 const LoginPage = () => {
-    const [showPassword, setShowPassword] = React.useState(false)
-
 
     const [state, formAction, pending] = useActionState(LoginAction, initialState)
+
+    const [SuccessFullLogin, setSuccessFullLogin] = useState(false)
+    const setLogin = useLoginStore(state => state.setLogin)
+
+    const audio = useRef<HTMLAudioElement | null>(null)
+
+    const router = useRouter()
+
+    // Add a ref for the success image
+    const imageRef = useRef<HTMLImageElement | null>(null);
 
     useToastAction<loginReturnAction>({
         state: state,
         pending,
         onSuccess: () => {
-            toast.dismiss('signup-loading');
-            toast.success('Logged-in successfully!');
+            if (state.success)
+                toast.success('Logged-in successfully!', {
+                    id: "success-toast"
+                });
         },
         onError: () => {
             if (state.success) return
@@ -49,9 +63,61 @@ const LoginPage = () => {
         }
     })
 
+    useEffect(() => {
+        let timeoutId: NodeJS.Timeout;
+        if (!!state.success) {
+            setLogin(state.data?.data.token!)
+            if (audio.current)
+                audio.current.play();
+            setSuccessFullLogin(true);
+
+            if (imageRef.current) {
+                // Only require gsap on the client side
+                gsap.set(imageRef.current, { rotate: 0, x: -400, y: -100, scale: 0.6 });
+                gsap.to(imageRef.current, {
+                    opacity: 1,
+                    duration: 0.6,
+                    scale: 1.5,
+                    rotate: 720,
+                    x: 0,
+                    y: 0,
+                    ease: "elastic.out(1,0.6)"
+                });
+                gsap.to(imageRef.current, {
+                    rotate: 1080,
+                    y: -30,
+                    x: 900,
+                    delay: 1.5,
+                    duration: 0.7,
+                    scale: 1,
+                    ease: "back.inOut(2)"
+                });
+                gsap.to(imageRef.current, {
+                    rotate: 0,
+                    y: -70,
+                    x: 100,
+                    delay: 4,
+                    duration: 0.7,
+                    scale: 1,
+                    ease: "back.inOut"
+                });
+            }
+
+            // Delay for 5 seconds before routing
+            timeoutId = setTimeout(() => {
+                router.push('/')
+            }, 7000);
+        }
+        return () => {
+            if (audio.current)
+                audio.current.pause();
+
+            if (timeoutId) clearTimeout(timeoutId);
+        };
+    }, [state.success, setLogin]);
 
     return (
-        <div className="min-h-screen gradient-bg dark:bg-dark bg-slate-50 flex flex-col items-center justify-center px-4 py-8">
+        <div className="min-h-screen gradient-bg dark:bg-dark bg-slate-50 flex flex-col items-center justify-center px-4 py-8 relative">
             {/* Logo */}
             <div className="mb-8">
                 <Logo />
@@ -169,6 +235,16 @@ const LoginPage = () => {
                     <a href="#" className="text-main hover:text-main/80">Privacy Policy</a>
                 </p>
             </div>
+            <Image
+                ref={imageRef}
+                hidden={!SuccessFullLogin}
+                src={'/happy-cat.gif'} width={100} height={100} alt='success cat meme'
+                className='absolute left-64'
+            />
+
+            <audio ref={audio}>
+                <source src='/happy.mp3' type='audio/mp3' />
+            </audio>
         </div>
     )
 }

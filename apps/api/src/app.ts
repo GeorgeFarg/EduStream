@@ -10,6 +10,7 @@ import materialRoutes from "./routes/material.routes";
 import assignmentRoutes from "./routes/assignment.routes";
 import submissionRoutes from "./routes/submission.routes";
 import classRoutes from "./routes/class.routes";
+import { authenticate } from "./middleware/auth.middleware";
 
 const app = express();
 
@@ -22,7 +23,8 @@ app.use(express.urlencoded({ extended: true }));
 // CORS middleware for frontend integration
 app.use(
   cors({
-    origin: process.env.ALLOWED_ORIGINS?.split(",") || "*",
+    // origin: process.env.ALLOWED_ORIGINS?.split(",") || "*",
+    origin: "http://localhost:3000",
     credentials: true,
   }),
 );
@@ -31,12 +33,12 @@ app.use(
 app.use((req: Request, res: Response, next) => {
   const start = Date.now();
   const rawBody =
-    req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH'
+    req.method === "POST" || req.method === "PUT" || req.method === "PATCH"
       ? JSON.stringify(req.body)
       : null;
   const { method, originalUrl } = req;
   let logText = `[REQUEST] ${method} ${originalUrl} | Query: ${JSON.stringify(
-    req.query
+    req.query,
   )}`;
   if (rawBody) logText += ` | Body: ${rawBody}`;
 
@@ -50,26 +52,26 @@ app.use((req: Request, res: Response, next) => {
     return defaultSend.apply(this, arguments as any);
   };
 
-  res.on('finish', () => {
+  res.on("finish", () => {
     const ms = Date.now() - start;
     let responseData;
     try {
-      responseData = typeof responseBody === 'string'
-        ? JSON.parse(responseBody)
-        : responseBody;
+      responseData =
+        typeof responseBody === "string"
+          ? JSON.parse(responseBody)
+          : responseBody;
     } catch {
       responseData = responseBody;
     }
     console.log(
       `[RESPONSE] ${method} ${originalUrl} | Status: ${res.statusCode} | Time: ${ms}ms | Response: ${JSON.stringify(
-        responseData
-      )}`
+        responseData,
+      )}`,
     );
   });
 
   next();
 });
-
 
 // Health check endpoint
 app.get("/health", (req: Request, res: Response) => {
@@ -82,6 +84,8 @@ app.get("/health", (req: Request, res: Response) => {
 
 // Mount route modules
 app.use("/api/auth", authRoutes);
+
+app.use(authenticate);
 app.use("/api/classes", classRoutes);
 app.use("/api/announcements", announcementRoutes);
 app.use("/api/materials", materialRoutes);

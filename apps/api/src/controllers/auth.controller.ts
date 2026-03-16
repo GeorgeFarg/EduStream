@@ -2,7 +2,11 @@ import type { Request, Response, NextFunction } from 'express';
 import { registerSchema, loginSchema } from '../validators/auth.validator';
 import { register, login } from '../services/auth.service';
 import { ZodError } from 'zod';
+import { createSession, SET_CasheSession } from '../services/session.service';
+import { redisClient } from '../config/redis';
 
+const DAY_DEFAULT_SESSION_TTL = 60 * 60 * 24; // 7 days
+const WEEK_DEFAULT_SESSION_TTL = 60 * 60 * 24 * 7; // 7 days
 /**
  * Register a new user
  * @route POST /api/auth/register
@@ -19,8 +23,20 @@ export const registerController = async (
     // Call auth service
     const result = await register(validatedData);
 
-    // Return 201 with token and user
-    res.status(201).json(result);
+    // Create a server-side session and set httpOnly cookie
+    const { token, expiresAt } = await createSession(result.user.id, WEEK_DEFAULT_SESSION_TTL * 1000);
+    // res.cookie('session', token, {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_ENV === 'production',
+    //   sameSite: 'lax',
+    //   expires: expiresAt,
+    //   path: '/',
+    // });
+
+    await SET_CasheSession(token, { ...result.user }, WEEK_DEFAULT_SESSION_TTL)
+
+    // Return 201 with token, user, and session (so server-side clients e.g. Next.js can set the cookie)
+    res.status(201).json({ ...result, token, expiresAt });
   } catch (error) {
     if (error instanceof ZodError) {
       // Handle validation errors
@@ -53,12 +69,26 @@ export const loginController = async (
   try {
     // Validate request body
     const validatedData = loginSchema.parse(req.body);
+    let { remember: is_remember } = validatedData;
+
 
     // Call auth service
     const result = await login(validatedData);
 
-    // Return 200 with token and user
-    res.status(200).json(result);
+    // Create a server-side session and set httpOnly cookie
+    const { token, expiresAt } = await createSession(result.user.id, is_remember ? (DAY_DEFAULT_SESSION_TTL * 30 * 1000) : (DAY_DEFAULT_SESSION_TTL * 1000));
+    // res.cookie('session', token, {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_ENV === 'production',
+    //   sameSite: 'lax',
+    //   expires: expiresAt,
+    //   path: '/',
+    // });
+
+    await SET_CasheSession(token, result.user, is_remember ? WEEK_DEFAULT_SESSION_TTL : DAY_DEFAULT_SESSION_TTL)
+
+    // Return 200 with token, user, and session (so server-side clients e.g. Next.js can set the cookie)
+    res.status(200).json({ ...result, sessionToken: token, expiresAt });
   } catch (error) {
     if (error instanceof ZodError) {
       // Handle validation errors
