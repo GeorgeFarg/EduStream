@@ -6,11 +6,24 @@ import app from "./app";
 import { redisClient } from "./config/redis";
 import { prisma } from "../lib/prisma";
 
+import http from "http";
+import { Server } from "socket.io";
+import { setupSocket } from "./socket/socket.handler";
+
 dotenv.config();
 
-const port = process.env.PORT || 3000;
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: "*"
+  }
+});
+
+setupSocket(io);
 
 // Middleware
+const port = process.env.PORT || 3000;
 app.use(
   cors({
     origin: ["http://localhost:3000"],

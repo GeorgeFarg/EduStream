@@ -11,9 +11,10 @@ import assignmentRoutes from "./routes/assignment.routes";
 import submissionRoutes from "./routes/submission.routes";
 import classRoutes from "./routes/class.routes";
 import { authenticate } from "./middleware/auth.middleware";
+import roomRoutes from './routes/room.routes';
 
 const app = express();
-
+app.use(cors());
 // Middleware for parsing JSON request bodies
 app.use(express.json());
 
@@ -28,6 +29,11 @@ app.use(
     credentials: true,
   }),
 );
+
+
+app.use('/api/rooms', roomRoutes);
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
 
 // Logger middleware
 app.use((req: Request, res: Response, next) => {
