@@ -44,14 +44,14 @@ const ClassroomCard = ({ classroom, index, userId }: Props) => {
         <div className="bg-white dark:bg-[#1a1a2e] rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-md transition-shadow duration-200">
 
             {/* Coloured header strip */}
-            <div className={`bg-linear-to-r ${gradient} px-5 py-4 flex items-start justify-between`}>
+            <div className={`bg-linear-to-r ${gradient} px-5 py-4 flex items-start justify-between min-h-20`}>
                 <div>
                     <h3 className="text-white font-bold text-base leading-tight">{classroom.name}</h3>
                     {classroom.description && (
                         <p className="text-white/70 text-xs mt-0.5 truncate max-w-[200px]">{classroom.description}</p>
                     )}
                 </div>
-                <div>
+                <div className='flex items-center'>
                     {userId === classroom.ownerId && <Badge badgeColor={badgeColor} text={'Owner'} />}
                     <button className="text-white/70 hover:text-white transition-colors mt-0.5">
                         <MoreVertical className="w-4 h-4" />
