@@ -15,7 +15,7 @@ export interface LoginDTO {
 }
 
 export interface AuthResponse {
-  token: string;
+  // token: string;
   user: {
     id: number;
     name: string;
@@ -51,14 +51,14 @@ export const register = async (data: RegisterDTO): Promise<AuthResponse> => {
     },
   });
 
-  // Generate JWT token
-  const token = generateToken({
-    userId: user.id,
-    email: user.email,
-  });
+  // // Generate JWT token
+  // const token = generateToken({
+  //   userId: user.id,
+  //   email: user.email,
+  // });
 
   return {
-    token,
+    // token,
     user: {
       id: user.id,
       name: user.name,
@@ -91,13 +91,13 @@ export const login = async (data: LoginDTO): Promise<AuthResponse> => {
   }
 
   // Generate JWT token
-  const token = generateToken({
-    userId: user.id,
-    email: user.email,
-  });
+  // const token = generateToken({
+  //   userId: user.id,
+  //   email: user.email,
+  // });
 
   return {
-    token,
+    // token,
     user: {
       id: user.id,
       name: user.name,

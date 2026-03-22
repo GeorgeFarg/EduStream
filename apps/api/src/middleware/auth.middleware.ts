@@ -1,6 +1,23 @@
-import type { Response, NextFunction } from 'express';
-import { verifyToken } from '../utils/jwt.util';
-import type { AuthRequest } from '../types/express';
+import type { Response, NextFunction } from "express";
+import type { AuthRequest } from "../types/express";
+import { verifyToken } from "../utils/jwt.util";
+import { prisma } from "../../lib/prisma";
+import { GET_CasheSession, SET_CasheSession } from "../services/session.service";
+import type { USER_TYPE } from "../types/user";
+
+function parseCookies(cookieHeader?: string) {
+  const cookies: Record<string, string> = {};
+  if (!cookieHeader) return cookies;
+  const pairs = cookieHeader.split(";");
+  for (const pair of pairs) {
+    const [rawName, ...rest] = pair.trim().split("=");
+    if (!rawName) continue;
+    const name = decodeURIComponent(rawName);
+    const value = decodeURIComponent(rest.join("="));
+    cookies[name] = value;
+  }
+  return cookies;
+}
 
 /**
  * Authentication middleware that verifies JWT token
@@ -12,51 +29,70 @@ import type { AuthRequest } from '../types/express';
 export const authenticate = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
-    // Extract token from Authorization header
-    const authHeader = req.headers.authorization;
+    // First try to authenticate via server-side session cookie
+    const cookies = parseCookies(req.headers.cookie);
+    const sessionToken = cookies["session"];
+    console.log("sessionToken", sessionToken);
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!sessionToken) {
       res.status(401).json({
         error: {
-          message: 'Authentication required. Please provide a valid token.',
-          code: 'UNAUTHORIZED',
+          message: "Authentication required. Please provide a valid token or session.",
+          code: "UNAUTHORIZED",
         },
       });
       return;
     }
 
-    // Extract the token (remove 'Bearer ' prefix)
-    const token = authHeader.substring(7);
 
-    // Verify token using jwt utility
-    const payload = verifyToken(token);
+    let checkChashe = await GET_CasheSession(sessionToken);
 
-    if (!payload) {
-      res.status(401).json({
-        error: {
-          message: 'Invalid or expired token.',
-          code: 'UNAUTHORIZED',
-        },
-      });
+    if (!!checkChashe) {
+      let user = JSON.parse(checkChashe) as USER_TYPE;
+      req.user = {
+        id: user.id,
+        email: user.email,
+      };
+      next();
       return;
     }
 
-    // Attach user to request object
-    req.user = {
-      id: payload.userId,
-      email: payload.email,
-      role: payload.role,
-    };
+    const session = await prisma.session.findUnique({
+      where: { token: sessionToken },
+      include: { user: true },
+    });
 
-    next();
+
+    if (session && session.expiresAt > new Date()) {
+      // await SET_CasheSession(sessionToken,)
+
+
+      req.user = {
+        id: session.user.id,
+        email: session.user.email,
+      };
+      next();
+      return;
+    } else {
+      res.status(401).json({
+        error: {
+          message: "Authentication required.",
+          code: "UNAUTHORIZED",
+        },
+      });
+    }
+
+
+
+
   } catch (error) {
     res.status(401).json({
       error: {
-        message: 'Authentication failed.',
-        code: 'UNAUTHORIZED',
+        message: "Authentication failed.",
+        code: "UNAUTHORIZED",
       },
     });
   }
