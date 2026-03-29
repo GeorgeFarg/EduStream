@@ -8,10 +8,10 @@ import { usePathname } from 'next/navigation'
 // ─── Sidebar navigation items ──────────────────────────────────────────────────
 
 const navItems = [
-    { label: 'Stream',    href: '/dashboard',           icon: LayoutGrid },
-    { label: 'Classwork', href: '/dashboard/classwork', icon: BookOpen   },
-    { label: 'People',    href: '/dashboard/people',    icon: Users      },
-    { label: 'Grades',    href: '/dashboard/grades',    icon: Star       },
+    { label: 'Stream', href: '/dashboard', icon: LayoutGrid },
+    { label: 'Classwork', href: '/dashboard/classwork', icon: BookOpen },
+    { label: 'People', href: '/dashboard/people', icon: Users },
+    { label: 'Grades', href: '/dashboard/grades', icon: Star },
 ]
 
 // ─── Component ─────────────────────────────────────────────────────────────────
@@ -24,7 +24,7 @@ const DashboardSidebar = () => {
 
             {/* Logo */}
             <div className="flex items-center gap-3 px-5 py-5 border-b border-slate-200 dark:border-white/10">
-                <div className="w-9 h-9 bg-main rounded-lg flex items-center justify-center flex-shrink-0">
+                <div className="w-9 h-9 bg-main rounded-lg flex items-center justify-center shrink-0">
                     <GraduationCap className="w-5 h-5 text-white" />
                 </div>
                 <div>
@@ -41,13 +41,12 @@ const DashboardSidebar = () => {
                         <Link
                             key={href}
                             href={href}
-                            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
-                                isActive
-                                    ? 'bg-main/10 text-main'
-                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
-                            }`}
+                            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${isActive
+                                ? 'bg-main/10 text-main'
+                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                                }`}
                         >
-                            <Icon className="w-4.5 h-4.5 flex-shrink-0" />
+                            <Icon className="w-4.5 h-4.5 shrink-0" />
                             {label}
                         </Link>
                     )

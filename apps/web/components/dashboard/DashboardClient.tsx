@@ -7,6 +7,7 @@ import ClassroomCard from '@/components/dashboard/ClassroomCard'
 import CreateClassModal from '@/components/dashboard/CreateClassModal'
 import JoinClassModal from '@/components/dashboard/JoinClassModal'
 import { apiBaseUrl } from '@/config/env'
+import Logo from '../ui/Logo'
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
@@ -69,11 +70,12 @@ const DashboardClient = ({ initialClassrooms }: Props) => {
         <>
             {/* ─── Top header bar ─────────────────────────────────────────────── */}
             <header className="sticky top-0 z-30 bg-white dark:bg-[#1a1a2e] border-b border-slate-200 dark:border-white/10 px-8 py-3.5 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                <Logo />
+                {/* <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                     <span>ITC - EGC</span>
                     <span>/</span>
                     <span className="font-semibold text-slate-900 dark:text-white">IT 4th EGC</span>
-                </div>
+                </div> */}
 
                 <div className="flex items-center gap-3">
                     <button className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all">

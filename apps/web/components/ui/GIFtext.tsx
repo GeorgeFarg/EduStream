@@ -38,6 +38,7 @@ export const GIFtext = ({
         >
             {show && positionX !== null && (
                 <Image
+                    unoptimized
                     src={`/${GifName}`}
                     alt=""
                     width={width}
