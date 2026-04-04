@@ -41,7 +41,7 @@ const ClassroomCard = ({ classroom, index, userId }: Props) => {
     const badgeColor: string = badgeColors[index % badgeColors.length] ?? ''
 
     return (
-        <div className="bg-white dark:bg-[#1a1a2e] rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-md transition-shadow duration-200">
+        <div className="bg-[#1a1a2e] rounded-2xl overflow-hidden border border-white/10 shadow-sm hover:shadow-md transition-shadow duration-200">
 
             {/* Coloured header strip */}
             <div className={`bg-linear-to-r ${gradient} px-5 py-4 flex items-start justify-between min-h-20`}>
@@ -63,7 +63,7 @@ const ClassroomCard = ({ classroom, index, userId }: Props) => {
             <div className="px-5 py-4">
                 {/* Class code badge */}
                 <div className="flex items-center gap-2 mb-4">
-                    <span className="text-xs text-slate-500 dark:text-slate-400">Class code:</span>
+                    <span className="text-xs text-slate-400">Class code:</span>
                     <span className="text-xs font-mono font-bold text-main bg-main/10 px-2 py-0.5 rounded-md tracking-widest">
                         {classroom.code}
                     </span>
@@ -73,9 +73,9 @@ const ClassroomCard = ({ classroom, index, userId }: Props) => {
                 <div className="flex items-center justify-between">
                     {/* Placeholder avatars (will be real members in a future update) */}
                     <div className="flex -space-x-2">
-                        <div className="w-7 h-7 rounded-full bg-linear-to-br from-orange-300 to-pink-400 border-2 border-white dark:border-[#1a1a2e]" />
-                        <div className="w-7 h-7 rounded-full bg-linear-to-br from-blue-300 to-indigo-400 border-2 border-white dark:border-[#1a1a2e]" />
-                        <div className="w-7 h-7 rounded-full bg-linear-to-br from-emerald-300 to-teal-400 border-2 border-white dark:border-[#1a1a2e] flex items-center justify-center">
+                        <div className="w-7 h-7 rounded-full bg-linear-to-br from-orange-300 to-pink-400 border-2 border-[#1a1a2e]" />
+                        <div className="w-7 h-7 rounded-full bg-linear-to-br from-blue-300 to-indigo-400 border-2 border-[#1a1a2e]" />
+                        <div className="w-7 h-7 rounded-full bg-linear-to-br from-emerald-300 to-teal-400 border-2 border-[#1a1a2e] flex items-center justify-center">
                             <span className="text-[9px] font-bold text-white">+</span>
                         </div>
                     </div>

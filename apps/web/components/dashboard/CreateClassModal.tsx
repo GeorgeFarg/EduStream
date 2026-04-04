@@ -73,22 +73,22 @@ const CreateClassModal = ({ isOpen, onClose, onSuccess }: Props) => {
             onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
         >
             {/* Modal card */}
-            <div className="w-full max-w-md bg-white dark:bg-[#1a1a2e] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden">
+            <div className="w-full max-w-md bg-[#1a1a2e] rounded-2xl shadow-2xl border border-white/10 overflow-hidden">
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200 dark:border-white/10">
+                <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 bg-main/10 rounded-lg flex items-center justify-center">
                             <BookOpen className="w-5 h-5 text-main" />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Create Class</h2>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">Set up a new classroom</p>
+                            <h2 className="text-lg font-bold text-white">Create Class</h2>
+                            <p className="text-xs text-slate-400">Set up a new classroom</p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/5 transition-all"
                     >
                         <X className="w-4 h-4" />
                     </button>
@@ -99,11 +99,11 @@ const CreateClassModal = ({ isOpen, onClose, onSuccess }: Props) => {
 
                     {/* Class Name */}
                     <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        <label htmlFor="name" className="block text-sm font-medium text-slate-300 mb-2">
                             Class Name <span className="text-red-500">*</span>
                         </label>
                         <Input
-                            icon={<BookOpen className="h-5 w-5 text-slate-500 dark:text-slate-400" />}
+                            icon={<BookOpen className="h-5 w-5 text-slate-400" />}
                             id="name"
                             type="text"
                             placeholder="e.g. Advanced Mathematics"
@@ -117,7 +117,7 @@ const CreateClassModal = ({ isOpen, onClose, onSuccess }: Props) => {
 
                     {/* Description */}
                     <div>
-                        <label htmlFor="description" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        <label htmlFor="description" className="block text-sm font-medium text-slate-300 mb-2">
                             Description <span className="text-slate-400 font-normal">(optional)</span>
                         </label>
                         <textarea
@@ -126,7 +126,7 @@ const CreateClassModal = ({ isOpen, onClose, onSuccess }: Props) => {
                             rows={3}
                             placeholder="What is this class about?"
                             defaultValue={!state.success ? state.values?.description : ''}
-                            className="w-full px-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-lg text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent transition-all resize-none text-sm"
+                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent transition-all resize-none text-sm"
                         />
                     </div>
 
@@ -135,7 +135,7 @@ const CreateClassModal = ({ isOpen, onClose, onSuccess }: Props) => {
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 py-2.5 px-4 rounded-lg border border-slate-300 dark:border-white/10 text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
+                            className="flex-1 py-2.5 px-4 rounded-lg border border-white/10 text-slate-300 text-sm font-medium hover:bg-white/5 transition-all"
                         >
                             Cancel
                         </button>

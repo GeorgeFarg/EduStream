@@ -69,7 +69,7 @@ const DashboardClient = ({ initialClassrooms }: Props) => {
     return (
         <>
             {/* ─── Top header bar ─────────────────────────────────────────────── */}
-            <header className="sticky top-0 z-30 bg-white dark:bg-[#1a1a2e] border-b border-slate-200 dark:border-white/10 px-8 py-3.5 flex items-center justify-between">
+            <header className="sticky top-0 z-30 bg-[#1a1a2e] border-b border-white/10 px-8 py-3.5 flex items-center justify-between">
                 <Logo />
                 {/* <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                     <span>ITC - EGC</span>
@@ -78,10 +78,10 @@ const DashboardClient = ({ initialClassrooms }: Props) => {
                 </div> */}
 
                 <div className="flex items-center gap-3">
-                    <button className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all">
+                    <button className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/5 transition-all">
                         <Moon className="w-4 h-4" />
                     </button>
-                    <button className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all">
+                    <button className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/5 transition-all">
                         <Grid3X3 className="w-4 h-4" />
                     </button>
                     <div className="w-8 h-8 rounded-full bg-linear-to-br from-orange-400 to-pink-500 cursor-pointer" />
@@ -94,8 +94,8 @@ const DashboardClient = ({ initialClassrooms }: Props) => {
                 {/* Page heading + dropdown button */}
                 <div className="flex items-start justify-between mb-8">
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Active Classrooms</h1>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage your courses and assignments</p>
+                        <h1 className="text-2xl font-bold text-white">Active Classrooms</h1>
+                        <p className="text-sm text-slate-400 mt-1">Manage your courses and assignments</p>
                     </div>
 
                     <div className="relative" ref={dropdownRef}>
@@ -108,18 +108,18 @@ const DashboardClient = ({ initialClassrooms }: Props) => {
                         </button>
 
                         {dropdownOpen && (
-                            <div className="absolute right-0 mt-2 w-44 bg-white dark:bg-[#1a1a2e] rounded-xl border border-slate-200 dark:border-white/10 shadow-xl overflow-hidden z-40">
+                            <div className="absolute right-0 mt-2 w-44 bg-[#1a1a2e] rounded-xl border border-white/10 shadow-xl overflow-hidden z-40">
                                 <button
                                     onClick={openCreateModal}
-                                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-200 hover:bg-white/5 transition-colors"
                                 >
                                     <BookOpen className="w-4 h-4 text-main shrink-0" />
                                     Create Class
                                 </button>
-                                <div className="mx-4 border-t border-slate-100 dark:border-white/10" />
+                                <div className="mx-4 border-t border-white/10" />
                                 <button
                                     onClick={openJoinModal}
-                                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-200 hover:bg-white/5 transition-colors"
                                 >
                                     <Hash className="w-4 h-4 text-main shrink-0" />
                                     Join Class
@@ -135,8 +135,8 @@ const DashboardClient = ({ initialClassrooms }: Props) => {
                         <div className="w-16 h-16 rounded-2xl bg-main/10 flex items-center justify-center mb-4">
                             <BookOpen className="w-8 h-8 text-main" />
                         </div>
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">No classrooms yet</h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs">
+                        <h3 className="text-lg font-semibold text-white mb-1">No classrooms yet</h3>
+                        <p className="text-sm text-slate-400 max-w-xs">
                             Create your first classroom or join one using a class code from your teacher.
                         </p>
                         <div className="flex gap-3 mt-6">
@@ -148,7 +148,7 @@ const DashboardClient = ({ initialClassrooms }: Props) => {
                             </button>
                             <button
                                 onClick={openJoinModal}
-                                className="flex items-center gap-2 border border-slate-300 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 font-medium px-5 py-2.5 rounded-xl text-sm transition-all"
+                                className="flex items-center gap-2 border border-white/10 text-slate-300 hover:bg-white/5 font-medium px-5 py-2.5 rounded-xl text-sm transition-all"
                             >
                                 <Hash className="w-4 h-4" /> Join Class
                             </button>
