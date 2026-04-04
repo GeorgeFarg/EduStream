@@ -1,8 +1,15 @@
 import React from 'react'
-import { MoreVertical } from 'lucide-react'
+import { Copy, ExternalLink, MoreVertical } from 'lucide-react'
 import Badge from '../ui/badge'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 import { Classroom } from '@/types/classroom-return'
+import { useRouter } from 'next/navigation'
 
 // ─── Card gradient palette ──────────────────────────────────────────────────────
 // Each card gets a gradient based on its position index, just like the design.
@@ -39,9 +46,10 @@ type Props = {
 const ClassroomCard = ({ classroom, index, userId }: Props) => {
     const gradient = gradients[index % gradients.length]
     const badgeColor: string = badgeColors[index % badgeColors.length] ?? ''
+    const router = useRouter()
 
     return (
-        <div className="bg-[#1a1a2e] rounded-2xl overflow-hidden border border-white/10 shadow-sm hover:shadow-md transition-shadow duration-200">
+        <div onClick={(e) => { e.stopPropagation(); router.push(`class/${classroom.id}`) }} className="bg-[#1a1a2e] rounded-2xl overflow-hidden border border-white/10 shadow-sm hover:shadow-md transition-shadow duration-200">
 
             {/* Coloured header strip */}
             <div className={`bg-linear-to-r ${gradient} px-5 py-4 flex items-start justify-between min-h-20`}>
@@ -51,11 +59,43 @@ const ClassroomCard = ({ classroom, index, userId }: Props) => {
                         <p className="text-white/70 text-xs mt-0.5 truncate max-w-[200px]">{classroom.description}</p>
                     )}
                 </div>
-                <div className='flex items-center'>
+                <div className="flex items-center gap-1">
                     {userId === classroom.ownerId && <Badge badgeColor={badgeColor} text={'Owner'} />}
-                    <button className="text-white/70 hover:text-white transition-colors mt-0.5">
-                        <MoreVertical className="w-4 h-4" />
-                    </button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger
+                            type="button"
+                            className="rounded-md p-1 text-white/70 outline-none hover:text-white focus-visible:ring-2 focus-visible:ring-white/40"
+                            onClick={(e) => e.stopPropagation()}
+                            onPointerDown={(e) => e.stopPropagation()}
+                        >
+                            <MoreVertical className="h-4 w-4" />
+                            <span className="sr-only">Class options</span>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                            align="end"
+                            className="min-w-44 border-white/10 bg-[#252538] text-white"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <DropdownMenuItem
+                                className="focus:bg-white/10 focus:text-white"
+                                onSelect={() => {
+                                    router.push(`class/${classroom.id}`)
+                                }}
+                            >
+                                <ExternalLink className="h-4 w-4" />
+                                Open class
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                className="focus:bg-white/10 focus:text-white"
+                                onSelect={() => {
+                                    void navigator.clipboard.writeText(classroom.code)
+                                }}
+                            >
+                                <Copy className="h-4 w-4" />
+                                Copy class code
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </div>
 

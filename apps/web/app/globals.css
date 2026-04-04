@@ -4,10 +4,15 @@
 
 @custom-variant dark (&:is(.dark *));
 
-body,
+/* Single vertical scroll root: avoid html+body both height:100% (pairs badly with Radix scroll lock). */
 html {
   width: 100%;
-  height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  width: 100%;
+  min-height: 100dvh;
   overflow-x: hidden;
 }
 
