@@ -14,7 +14,7 @@ export default function Home() {
       <Features />
       <Testimonials />
       {/* Small section not worth seperation */}
-      <div className="dark:bg-main py-20 px-6 text-center">
+      <div className="bg-main py-20 px-6 text-center">
         <h2 className="text-5xl font-bold text-center mt-5">Start Your Digital Transformation</h2>
         <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto text-center mt-3">
           Join over 500 universities modernizing their education delivery. Schedule a <GIFtext GifName="best-banana-cat.gif" width={70} height={70}>personalized</GIFtext> demo for your team today.

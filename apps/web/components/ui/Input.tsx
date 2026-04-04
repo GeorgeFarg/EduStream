@@ -20,10 +20,10 @@ const Input = ({
                 name={id}
                 type={type}
                 className={
-                    `w-full pl-10 pr-4 py-3 dark:bg-white/5 bg-slate-50  border rounded-lg text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all
+                    `w-full pl-10 pr-4 py-3 bg-white/5  border rounded-lg  text-white  placeholder-slate-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all
                     ${isError
-                        ? "border-red-500 dark:border-red-400 focus:ring-red-500"
-                        : "border-slate-300 dark:border-white/10 focus:ring-main"
+                        ? "border-red-400 focus:ring-red-500"
+                        : "border-white/10 focus:ring-main"
                     }`
                 }
                 placeholder={placeholder}

@@ -128,10 +128,10 @@ const LoginPage = () => {
                 <div className="NavBG dark:NavBG bg-white/80 dark:bg-white/5 rounded-2xl p-6 md:p-8 shadow-2xl border border-white/20 dark:border-white/10">
                     {/* Header */}
                     <div className="text-center mb-8">
-                        <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-2">
+                        <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
                             Welcome Back
                         </h1>
-                        <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base">
+                        <p className="text-slate-400 text-sm md:text-base">
                             Sign in to your EduStream account
                         </p>
                     </div>
@@ -142,7 +142,7 @@ const LoginPage = () => {
                         <div>
                             <label
                                 htmlFor="email"
-                                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+                                className="block text-sm font-medium text-slate-300 mb-2"
                             >
                                 Email Address
                             </label>
@@ -160,7 +160,7 @@ const LoginPage = () => {
                         <div>
                             <label
                                 htmlFor="password"
-                                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+                                className="block text-sm font-medium text-slate-300 mb-2"
                             >
                                 Password
                             </label>
@@ -183,7 +183,7 @@ const LoginPage = () => {
                                 />
                                 <label
                                     htmlFor="remember"
-                                    className="ml-2 text-sm text-slate-700 dark:text-slate-300"
+                                    className="ml-2 text-sm text-slate-400"
                                 >
                                     Remember me
                                 </label>

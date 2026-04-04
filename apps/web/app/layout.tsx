@@ -7,7 +7,7 @@ import { Toaster } from "react-hot-toast";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -34,7 +34,7 @@ export default function RootLayout({
 
   return (
     <html lang="en" className={cn("font-sans", geist.variable)}>
-      <body className={`${geistSans.variable} ${geistMono.variable} dark:text-white dark:bg-dark h-dvh`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} text-white bg-dark h-dvh`}>
         {children}
         <Toaster
           position="bottom-right"

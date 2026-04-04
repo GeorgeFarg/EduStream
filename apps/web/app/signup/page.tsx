@@ -52,7 +52,7 @@ const SignupPage = () => {
     })
 
     return (
-        <div className="min-h-screen gradient-bg dark:bg-dark bg-slate-50 flex flex-col items-center justify-center px-4 py-8">
+        <div className="min-h-screen gradient-bg bg-dark flex flex-col items-center justify-center px-4 py-8">
             {/* Logo */}
             <div className="mb-8">
                 <Logo />
@@ -60,13 +60,13 @@ const SignupPage = () => {
 
             {/* Signup Card */}
             <div className="w-full max-w-md">
-                <div className="NavBG dark:NavBG bg-white/80 dark:bg-white/5 rounded-2xl p-6 md:p-8 shadow-2xl border border-white/20 dark:border-white/10">
+                <div className="NavBG dark:NavBG bg-white/5 rounded-2xl p-6 md:p-8 shadow-2xl border border-white/20 dark:border-white/10">
                     {/* Header */}
                     <div className="text-center mb-8">
-                        <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-2">
+                        <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
                             Create Account
                         </h1>
-                        <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base">
+                        <p className="text-slate-400 text-sm md:text-base">
                             Join EduStream and start your learning journey
                         </p>
                     </div>
@@ -77,7 +77,7 @@ const SignupPage = () => {
                         <div>
                             <label
                                 htmlFor="name"
-                                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+                                className="block text-sm font-medium text-slate-300 mb-2"
                             >
                                 Full Name
                             </label>
@@ -95,7 +95,7 @@ const SignupPage = () => {
                         <div>
                             <label
                                 htmlFor="email"
-                                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+                                className="block text-sm font-medium text-slate-300 mb-2"
                             >
                                 Email Address
                             </label>
@@ -113,7 +113,7 @@ const SignupPage = () => {
                         <div>
                             <label
                                 htmlFor="password"
-                                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+                                className="block text-sm font-medium text-slate-300 mb-2"
                             >
                                 Password
                             </label>
@@ -130,7 +130,7 @@ const SignupPage = () => {
                         <div>
                             <label
                                 htmlFor="confirmPassword"
-                                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+                                className="block text-sm font-medium text-slate-300 mb-2"
                             >
                                 Confirm Password
                             </label>
@@ -150,7 +150,7 @@ const SignupPage = () => {
                                 name="terms"
                                 type="checkbox"
                                 className={
-                                    `w-4 h-4 rounded bg-white dark:bg-white/10 text-main focus:ring-main focus:ring-offset-0 mt-1
+                                    `w-4 h-4 rounded bg-white/10 text-main focus:ring-main focus:ring-offset-0 mt-1
                                     border-slate-300 dark:border-white/20
                                     ${!state.success && state.errors?.terms ? "border-red-500 focus:ring-red-500 dark:border-red-400" : ""}`
                                 }
@@ -159,10 +159,10 @@ const SignupPage = () => {
                             <label
                                 htmlFor="terms"
                                 className={
-                                    `ml-2 text-sm 
+                                    `ml-2 text-sm text-slate-400
                                     ${!state.success && state.errors?.terms
-                                        ? "text-red-600 dark:text-red-400"
-                                        : "text-slate-700 dark:text-slate-300"}`
+                                        ? "text-red-400"
+                                        : "text-slate-300"}`
                                 }
                             >
                                 I agree to the{' '}
