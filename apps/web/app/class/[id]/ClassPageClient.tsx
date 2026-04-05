@@ -4,7 +4,7 @@ import Modal from "@/components/Cardsmodel";
 import PostContent from "./PostContent";
 import ClassBanner from "./classbanner";
 
-export default function StreamPage() {
+export default function ClassPage() {
   const [isPostOpen, setIsPostOpen] = useState(false);
 
   const openModal = () => setIsPostOpen(true);
@@ -12,7 +12,7 @@ export default function StreamPage() {
 
   return (
     <div className="p-4 md:p-10 max-w-5xl mx-auto flex flex-col gap-6">
-      
+
       <ClassBanner />
 
       <div className="flex justify-end">
@@ -22,9 +22,9 @@ export default function StreamPage() {
           className="flex items-center gap-3 bg-[#e3f2fd] hover:bg-[#d1e9ff] text-[#1a73e8] px-4 py-2 md:px-6 md:py-3 rounded-full shadow-md transition-all duration-300 hover:shadow-lg font-medium text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#1a73e8] focus:ring-offset-2"
         >
           <span>New Announcement</span>
-          <svg 
-            className="w-5 h-5" 
-            fill="currentColor" 
+          <svg
+            className="w-5 h-5"
+            fill="currentColor"
             viewBox="0 0 24 24"
             aria-hidden="true"
           >

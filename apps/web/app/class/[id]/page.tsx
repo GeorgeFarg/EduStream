@@ -1,3 +1,4 @@
+import ClassPage from './ClassPageClient';
 import React from 'react'
 
 
@@ -9,7 +10,7 @@ const ClassDetails = async ({
     const { id } = await params;
 
     return (
-        <div>{id}</div>
+        <div><ClassPage /></div>
     )
 }
 
