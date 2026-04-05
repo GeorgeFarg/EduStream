@@ -12,13 +12,13 @@ const NotFound = () => (
                     {/* Abstract Glow/3D */}
                     <div className="absolute inset-0 bg-main/5 rounded-full blur-3xl scale-75"></div>
                     <div className="relative z-10 flex flex-col items-center">
-                        <div className="w-64 h-64 bg-white dark:bg-slate-800 rounded-3xl shadow-2xl flex items-center justify-center border border-slate-100 dark:border-slate-700 transform rotate-3 relative">
+                        <div className="w-64 h-64 bg-slate-800 rounded-3xl shadow-2xl flex items-center justify-center border border-slate-700 transform rotate-3 relative">
                             {/* Top right floating book icon */}
                             <div className="absolute -top-6 -right-6 w-20 h-20 bg-main rounded-2xl flex items-center justify-center text-white shadow-lg transform -rotate-12">
                                 <span className="material-symbols-outlined text-4xl">menu_book</span>
                             </div>
                             <div className="flex flex-col items-center gap-4">
-                                <span className="material-symbols-outlined text-8xl text-slate-200 dark:text-slate-700">
+                                <span className="material-symbols-outlined text-8xl text-slate-700">
                                     search_off
                                 </span>
                                 <div className="w-32 h-2 bg-slate-700 rounded-full"></div>
@@ -30,7 +30,7 @@ const NotFound = () => (
                     <div className="absolute top-10 left-10 w-12 h-12 bg-main/20 rounded-lg backdrop-blur-sm flex items-center justify-center text-main animate-bounce">
                         <span className="material-symbols-outlined">edit</span>
                     </div>
-                    <div className="absolute bottom-20 right-5 w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-full shadow-sm flex items-center justify-center text-slate-400">
+                    <div className="absolute bottom-20 right-5 w-10 h-10 bg-slate-800 rounded-full shadow-sm flex items-center justify-center text-slate-400">
                         <span className="material-symbols-outlined text-sm">question_mark</span>
                     </div>
                     {/* 404 large in background */}
@@ -40,10 +40,10 @@ const NotFound = () => (
                 </div>
                 {/* Info */}
                 <div className="space-y-4">
-                    <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white">
+                    <h2 className="text-4xl md:text-5xl font-bold text-white">
                         Page Not Found
                     </h2>
-                    <p className="text-lg text-slate-600 dark:text-slate-400 max-w-lg mx-auto leading-relaxed">
+                    <p className="text-lg text-slate-400 max-w-lg mx-auto leading-relaxed">
                         The page you're looking for might have been moved, deleted, or never existed.
                     </p>
                 </div>
@@ -57,7 +57,7 @@ const NotFound = () => (
                         <span>Back to Dashboard</span>
                     </Link>
                     <Link
-                        className="flex items-center justify-center gap-2 px-8 py-4 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all w-full sm:w-auto"
+                        className="flex items-center justify-center gap-2 px-8 py-4 bg-slate-800 text-white border border-slate-700 rounded-xl font-semibold hover:bg-slate-700 transition-all w-full sm:w-auto"
                         href="#"
                     >
                         <span className="material-symbols-outlined text-xl">search</span>
@@ -67,7 +67,7 @@ const NotFound = () => (
             </div>
         </main>
         {/* Footer */}
-        <footer className="w-full py-8 border-t border-slate-200 dark:border-slate-800 mt-auto">
+        <footer className="w-full py-8 border-t border-slate-800 mt-auto">
             <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
                 <p className="text-slate-500 text-sm font-medium">
                     © 2026 EduStream LMS. All rights reserved.
