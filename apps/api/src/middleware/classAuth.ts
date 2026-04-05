@@ -45,8 +45,8 @@ export const isMemberOfClass = async (
   next: NextFunction
 ) => {
   try {
-    const userId = (req as any).user?.userId;
-    const classId = Number(req.params.classId || req.body.classId || req.query.classId);
+    const userId = (req as any).user?.id;
+    const classId = Number(req.query.classId);
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });

@@ -14,7 +14,7 @@ export default function StreamLayout({
             </header>
 
             <div className="flex flex-1 overflow-hidden">
-                <ClassSideBar />
+                {/* <ClassSideBar /> */}
 
                 <main className="flex-1 overflow-y-auto p-8 custom-scrollbar">
                     <div className="max-w-6xl mx-auto">
