@@ -7,11 +7,11 @@ import { GIFtext } from '../ui/GIFtext'
 
 const Hero = () => {
     return (
-        <div className="h-full gradient-bg border-b-2 border-b-blue-950 px-4">
+        <div className="h-full gradient-bg border-b-2 border-b-blue-950 px-4 py-28">
             <div className="h-full flex justify-around items-center">
                 <div>
                     {/* The new sections */}
-                    <div className="text-main inline-flex w-fit items-center gap-2 rounded-full border border-action-blue/30 bg-action-blue/10 px-3 py-1 text-xs font-semibold text-action-blue">
+                    <div className=" text-main inline-flex w-fit items-center gap-2 rounded-full border border-action-blue/30 bg-action-blue/10 px-3 py-1 text-xs font-semibold text-action-blue">
                         <span className="relative flex h-2 w-2">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-main opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-main"></span>
