@@ -47,7 +47,7 @@ const AnnouncementBox = ({ announcement }: { announcement: Announcement }) => { 
                 </span>
             </div>
             <div
-                className="text-gray-700 whitespace-pre-line wrap-break-word w-full max-w-full overflow-x-auto"
+                className="text-gray-700 whitespace-pre-line wrap-break-word w-full max-w-full text-sm overflow-x-auto"
                 style={{
                     wordBreak: "break-word",
                     overflowWrap: "break-word",
@@ -58,7 +58,7 @@ const AnnouncementBox = ({ announcement }: { announcement: Announcement }) => { 
             {/* If you want to display teacher or class info, add here */}
 
 
-            <div className="mt-4">
+            <div className="mt-4 text-sm">
                 <button
                     className="text-sm text-blue-700 hover:underline focus:outline-none"
                     onClick={handleToggleComments}
