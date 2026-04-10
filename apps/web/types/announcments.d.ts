@@ -11,4 +11,5 @@ export type Announcement = {
 
 export type Announcement_return = {
     announcements: Announcement[],
+    memperShip: { isTeacher: boolean }
 }

@@ -16,21 +16,24 @@ async function getAnnouncments(id: string): Promise<Announcement_return> {
         headers: session ? { Cookie: `session=${session}` } : {},
     });
 
+    const data: any = await res.json();
+
     if (!res.ok) {
         if (res.status === 404)
-            return {
-                announcements: [],
-                // userId: (await res.json()).userId
-            }
+            return Promise.reject({
+                message: "Announcements not found",
+                data,
+                success: false
+            });
+
         throw new Error(res.status.toString())
     };
 
-    const data: any = await res.json();
+
+    console.log("data", res);
 
 
-    return {
-        announcements: data
-    };
+    return data;
 }
 
 
@@ -44,7 +47,7 @@ const ClassDetails = async ({
     const initialAnnouncements = await getAnnouncments(id);
 
     return (
-        <div><ClassPage initialAnnouncements={initialAnnouncements} /></div>
+        <div><ClassPage initialAnnouncements={initialAnnouncements} classId={id} /></div>
     )
 }
 

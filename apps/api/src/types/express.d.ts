@@ -9,7 +9,13 @@ declare global {
         role: 'TEACHER' | 'STUDENT';
       };
     }
+
+    interface ClassMemeberRequest extends AuthRequest {
+      memperShip?: {
+        isTeacher: boolean,
+      }
+    }
   }
 }
 
-export {AuthRequest};
+export { AuthRequest, ClassMemeberRequest };

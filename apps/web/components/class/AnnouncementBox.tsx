@@ -1,5 +1,6 @@
 import { Announcement } from '@/types/announcments'
 import React from 'react'
+import parse from "html-react-parser"
 
 const AnnouncementBox = ({ announcement }: { announcement: Announcement }) => {        // Dropdown for comments
     const [commentsOpen, setCommentsOpen] = React.useState(false);
@@ -53,7 +54,7 @@ const AnnouncementBox = ({ announcement }: { announcement: Announcement }) => { 
                     overflowWrap: "break-word",
                 }}
             >
-                {announcement.content}
+                {parse(announcement.content)}
             </div>
             {/* If you want to display teacher or class info, add here */}
 

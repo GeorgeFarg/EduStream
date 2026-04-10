@@ -1,14 +1,14 @@
 import type { Request, Response, NextFunction } from 'express';
 import { prisma } from '../../lib/prisma';
 import { ClassRole } from '../generated/prisma/client';
-
+import type { ClassMemeberRequest } from "../types/express"
 export const isTeacherInClass = async (
-  req: Request,
+  req: ClassMemeberRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const userId = (req as any).user?.userId;
+    const userId = req.user?.id;
     // Check params or body for classId
     const classId = Number(req.params.classId || req.body.classId);
 
@@ -33,6 +33,10 @@ export const isTeacherInClass = async (
       return res.status(403).json({ error: 'Access denied: Teachers only' });
     }
 
+    req.memperShip = {
+      isTeacher: membership.role == "TEACHER"
+    }
+
     next();
   } catch (error) {
     next(error);
@@ -40,7 +44,7 @@ export const isTeacherInClass = async (
 };
 
 export const isMemberOfClass = async (
-  req: Request,
+  req: ClassMemeberRequest,
   res: Response,
   next: NextFunction
 ) => {
@@ -67,6 +71,10 @@ export const isMemberOfClass = async (
 
     if (!membership) {
       return res.status(403).json({ error: 'Access denied: You are not a member of this class' });
+    }
+
+    req.memperShip = {
+      isTeacher: membership.role == "TEACHER"
     }
 
     next();

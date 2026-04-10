@@ -1,5 +1,5 @@
 import type { Response, NextFunction } from 'express';
-import type { AuthRequest } from '../types/express';
+import type { AuthRequest, ClassMemeberRequest } from '../types/express';
 import { createAnnouncementSchema } from '../validators/announcement.validator';
 import * as announcementService from '../services/announcement.service';
 
@@ -28,19 +28,19 @@ export const createAnnouncementController = async (
 };
 
 export const getAllAnnouncementsController = async (
-    req: AuthRequest,
+    req: ClassMemeberRequest,
     res: Response,
     next: NextFunction
 ) => {
     try {
         const classId = Number(req.query.classId);
-        
+
         if (!classId || isNaN(classId)) {
-             return res.status(400).json({ error: 'Class ID is required' });
+            return res.status(400).json({ error: 'Class ID is required' });
         }
 
         const announcements = await announcementService.getAllAnnouncements(classId);
-        return res.status(200).json(announcements);
+        return res.status(200).json({ announcements, memperShip: req.memperShip });
     } catch (error) {
         next(error);
     }
