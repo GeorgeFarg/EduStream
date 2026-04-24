@@ -10,7 +10,6 @@ import materialRoutes from "./routes/material.routes";
 import assignmentRoutes from "./routes/assignment.routes";
 import submissionRoutes from "./routes/submission.routes";
 import classRoutes from "./routes/class.routes";
-import chatRoutes from "./routes/chat.routes";
 import { authenticate } from "./middleware/auth.middleware";
 
 const app = express();
@@ -88,7 +87,6 @@ app.use("/api/auth", authRoutes);
 
 app.use(authenticate);
 app.use("/api/classes", classRoutes);
-app.use("/api/classes/:classId/chat", chatRoutes);
 app.use("/api/announcements", announcementRoutes);
 app.use("/api/materials", materialRoutes);
 app.use("/api/assignments", assignmentRoutes);

@@ -28,7 +28,6 @@ model User {
   submissions   Submission[]
   ownedClasses  Class[] // Classes created by this user
   sessions      Session[]
-  chatMessages  ChatMessage[]
   
   @@index([email])
 }
@@ -48,7 +47,6 @@ model Class {
   announcements Announcement[]
   materials     Material[]
   assignments   Assignment[]
-  chatMessages  ChatMessage[]
 
   @@index([code])
   @@index([ownerId])

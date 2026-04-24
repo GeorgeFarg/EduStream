@@ -28,7 +28,6 @@ model User {
   submissions   Submission[]
   ownedClasses  Class[] // Classes created by this user
   sessions      Session[]
-  chatMessages  ChatMessage[]
   
   @@index([email])
 }
@@ -48,7 +47,6 @@ model Class {
   announcements Announcement[]
   materials     Material[]
   assignments   Assignment[]
-  chatMessages  ChatMessage[]
 
   @@index([code])
   @@index([ownerId])
@@ -171,21 +169,4 @@ model Session {
 
   @@index([userId])
   @@index([expiresAt])
-}
-
-model ChatMessage {
-  id        Int      @id @default(autoincrement())
-  content   String   @db.Text
-  classId   Int
-  senderId  Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
-  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
-
-  @@index([classId])
-  @@index([senderId])
-  @@index([createdAt])
 }

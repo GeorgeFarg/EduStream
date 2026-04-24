@@ -29,27 +29,11 @@ async function getAnnouncments(id: string): Promise<Announcement_return> {
         throw new Error(res.status.toString())
     };
 
+
+    console.log("data", res);
+
+
     return data;
-}
-
-async function getClassName(id: string): Promise<string> {
-    "use server"
-    if (!apiBaseUrl) return "Class";
-
-    const cookieStore = await cookies();
-    const session = cookieStore.get("session")?.value;
-
-    const res = await fetch(`${apiBaseUrl}/api/classes`, {
-        cache: "no-store",
-        headers: session ? { Cookie: `session=${session}` } : {},
-    });
-
-    const data: any = await res.json();
-
-    if (!res.ok || !data?.classes) return "Class";
-
-    const found = data.classes.find((c: any) => String(c.id) === id);
-    return found?.name || "Class";
 }
 
 
@@ -60,13 +44,10 @@ const ClassDetails = async ({
     params: Promise<{ id: string }>
 }) => {
     const { id } = await params;
-    const [initialAnnouncements, className] = await Promise.all([
-        getAnnouncments(id),
-        getClassName(id),
-    ]);
+    const initialAnnouncements = await getAnnouncments(id);
 
     return (
-        <div><ClassPage initialAnnouncements={initialAnnouncements} classId={id} className={className} /></div>
+        <div><ClassPage initialAnnouncements={initialAnnouncements} classId={id} /></div>
     )
 }
 

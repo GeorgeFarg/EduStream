@@ -1,4 +1,5 @@
-import http from "http";
+import express from "express";
+import type { Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import app from "./app";
@@ -9,9 +10,6 @@ dotenv.config();
 
 const port = process.env.PORT || 3000;
 
-// Create HTTP server (needed for Socket.io)
-const server = http.createServer(app);
-
 // Middleware
 app.use(
   cors({
@@ -19,14 +17,17 @@ app.use(
     credentials: true,
   }),
 );
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 
 redisClient.connect().then(() => console.log('Redis is connected successfully 🚀'));
-checkSQLConnection();
-
+checkSQLConnection()
 // Start server
-server.listen(port, async () => {
+app.listen(port, async () => {
   console.log(`Server is running on port http://localhost:${port} 🔥`);
 });
+
 
 function checkSQLConnection() {
   try {
@@ -35,6 +36,5 @@ function checkSQLConnection() {
   } catch (e) {
     console.error("SQL Connection failed", e);
   }
-}
 
-export { server };
+}

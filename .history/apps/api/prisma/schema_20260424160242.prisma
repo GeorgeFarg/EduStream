@@ -28,7 +28,6 @@ model User {
   submissions   Submission[]
   ownedClasses  Class[] // Classes created by this user
   sessions      Session[]
-  chatMessages  ChatMessage[]
   
   @@index([email])
 }
