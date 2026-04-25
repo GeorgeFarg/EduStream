@@ -1,6 +1,5 @@
 import { Router } from 'express';
-import { registerController, loginController, meController } from '../controllers/auth.controller';
-import { authenticate } from '../middleware/auth.middleware';
+import { registerController, loginController } from '../controllers/auth.controller';
 
 const router = Router();
 
@@ -18,11 +17,5 @@ router.post('/register', registerController);
  */
 router.post('/login', loginController);
 
-/**
- * @route GET /api/auth/me
- * @desc Get current authenticated user
- * @access Private
- */
-router.get('/me', authenticate, meController);
 
 export default router;

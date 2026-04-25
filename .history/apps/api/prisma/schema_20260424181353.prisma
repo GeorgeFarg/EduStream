@@ -191,21 +191,3 @@ model ChatMessage {
   @@index([senderId])
   @@index([createdAt])
 }
-
-model PrivateMessage {
-  id         Int      @id @default(autoincrement())
-  content    String   @db.Text
-  senderId   Int
-  receiverId Int
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  readAt     DateTime?
-
-  // Relations
-  sender     User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
-
-  @@index([senderId])
-  @@index([receiverId])
-  @@index([createdAt])
-}

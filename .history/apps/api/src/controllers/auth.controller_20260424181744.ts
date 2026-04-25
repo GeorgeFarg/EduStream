@@ -1,6 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { AuthRequest } from '../types/express';
-import { prisma } from '../../lib/prisma';
 import { registerSchema, loginSchema } from '../validators/auth.validator';
 import { register, login } from '../services/auth.service';
 import { ZodError } from 'zod';
@@ -55,41 +54,6 @@ export const registerController = async (
       return;
     }
     // Pass other errors to error handler middleware
-    next(error);
-  }
-};
-
-/**
- * Get current authenticated user
- * @route GET /api/auth/me
- */
-export const meController = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    if (!req.user) {
-      res.status(401).json({
-        error: { message: 'Authentication required.', code: 'UNAUTHORIZED' },
-      });
-      return;
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: req.user.id },
-      select: { id: true, name: true, email: true, createdAt: true },
-    });
-
-    if (!user) {
-      res.status(404).json({
-        error: { message: 'User not found.', code: 'NOT_FOUND' },
-      });
-      return;
-    }
-
-    res.status(200).json({ user });
-  } catch (error) {
     next(error);
   }
 };

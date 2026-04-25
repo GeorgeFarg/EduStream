@@ -1,19 +1,13 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Calendar, CheckSquare, GraduationCap, ChevronDown, MessageSquare } from "lucide-react";
+import { Home, Calendar, CheckSquare, GraduationCap, ChevronDown } from "lucide-react"; 
 
 const StreamSideBar = () => {
   const pathname = usePathname();
   
   const basicLinks = [
     { key: 'home', label: 'HOME', href: '/', icon: <Home size={18} /> },
-    {
-      key: 'chat',
-      label: 'CHAT',
-      href: '/private-chat',
-      icon: <MessageSquare size={18} />,
-    },
     { 
       key: 'calendar', 
       label: 'CALENDAR', 

@@ -1,6 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { AuthRequest } from '../types/express';
-import { prisma } from '../../lib/prisma';
 import { registerSchema, loginSchema } from '../validators/auth.validator';
 import { register, login } from '../services/auth.service';
 import { ZodError } from 'zod';

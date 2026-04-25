@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import axiosClient from "@/util/axiosClient";
 import { Send, MessageCircle, Users } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 interface ChatMessage {
   id: number;
@@ -32,7 +31,6 @@ export default function ClassChat({ classId, className }: ClassChatProps) {
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const router = useRouter();
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -96,52 +94,57 @@ export default function ClassChat({ classId, className }: ClassChatProps) {
     }
   };
 
-  const handlePrivateChat = (userId: number) => {
-    router.push(`/private-chat?to=${userId}`);
-  };
-
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
+  // Group consecutive messages from the same sender
+  const renderMessages = () => {
+    const result: JSX.Element[] = [];
+    let i = 0;
 
-  const getAvatarColor = (userId: number) => {
-    const colors = [
-      "bg-red-500",
-      "bg-orange-500",
-      "bg-amber-500",
-      "bg-green-500",
-      "bg-emerald-500",
-      "bg-teal-500",
-      "bg-cyan-500",
-      "bg-sky-500",
-      "bg-blue-500",
-      "bg-indigo-500",
-      "bg-violet-500",
-      "bg-purple-500",
-      "bg-fuchsia-500",
-      "bg-pink-500",
-      "bg-rose-500",
-    ];
-    return colors[userId % colors.length];
+    while (i < messages.length) {
+      const msg = messages[i];
+      const isMe = msg.senderId === currentUserId;
+      const showName = !isMe && (i === 0 || messages[i - 1].senderId !== msg.senderId);
+
+      result.push(
+        <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
+          <div className={`max-w-[85%] ${isMe ? "items-end" : "items-start"} flex flex-col`}>
+            {showName && (
+              <span className="text-[10px] text-white/40 mb-0.5 ml-1">
+                {msg.sender.name}
+              </span>
+            )}
+            <div
+              className={`px-3 py-2 rounded-2xl text-xs sm:text-sm ${
+                isMe
+                  ? "bg-[#0d7ff2] text-white rounded-br-md"
+                  : "bg-white/10 text-white rounded-bl-md"
+              }`}
+            >
+              <p className="break-words">{msg.content}</p>
+              <span className={`text-[9px] mt-1 block ${isMe ? "text-blue-200" : "text-white/40"}`}>
+                {formatTime(msg.createdAt)}
+              </span>
+            </div>
+          </div>
+        </div>
+      );
+      i++;
+    }
+
+    return result;
   };
 
   return (
     <div className="flex flex-col h-full rounded-xl border border-white/10 bg-[#0a0a0a]/60 backdrop-blur-sm overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 border-b border-white/10 bg-[#0a0a0a]/50 shrink-0">
-        <MessageCircle size={16} className="text-[#0d7ff2]" />
+        <MessageCircle size={16} className="text-[#0d7ff2] sm:size-[18px]" />
         <h3 className="font-semibold text-xs sm:text-sm text-white truncate">
-          {className ? className : "Class Chat"}
+          {className ? `${className}` : "Class Chat"}
         </h3>
         <div className="ml-auto flex items-center gap-1.5 text-white/30">
           <Users size={12} />
@@ -157,48 +160,7 @@ export default function ClassChat({ classId, className }: ClassChatProps) {
             <p>No messages yet. Start the conversation!</p>
           </div>
         )}
-        {messages.map((msg, index) => {
-          const isMe = msg.senderId === currentUserId;
-          const prevMsg = index > 0 ? messages[index - 1] : null;
-          const showName = !isMe && (!prevMsg || prevMsg.senderId !== msg.senderId);
-
-          return (
-            <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"} gap-2`}>
-              {/* Avatar for other users */}
-              {!isMe && showName && (
-                <button
-                  onClick={() => handlePrivateChat(msg.senderId)}
-                  className={`w-8 h-8 rounded-full ${getAvatarColor(msg.senderId)} flex items-center justify-center text-white text-[10px] font-bold shrink-0 cursor-pointer hover:opacity-80 transition-opacity`}
-                  title={`Chat with ${msg.sender.name}`}
-                >
-                  {getInitials(msg.sender.name)}
-                </button>
-              )}
-              {/* Spacer for consecutive messages from same user */}
-              {!isMe && !showName && <div className="w-8 shrink-0" />}
-
-              <div className={`max-w-[75%] flex flex-col ${isMe ? "items-end" : "items-start"}`}>
-                {showName && (
-                  <span className="text-[10px] text-white/40 mb-0.5 ml-1">
-                    {msg.sender.name}
-                  </span>
-                )}
-                <div
-                  className={`px-3 py-2 rounded-2xl text-xs sm:text-sm ${
-                    isMe
-                      ? "bg-[#0d7ff2] text-white rounded-br-md"
-                      : "bg-white/10 text-white rounded-bl-md"
-                  }`}
-                >
-                  <p className="break-words">{msg.content}</p>
-                  <span className={`text-[9px] mt-1 block ${isMe ? "text-blue-200" : "text-white/40"}`}>
-                    {formatTime(msg.createdAt)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        {renderMessages()}
         <div ref={messagesEndRef} />
       </div>
 
@@ -226,7 +188,7 @@ export default function ClassChat({ classId, className }: ClassChatProps) {
           className="p-2 rounded-lg bg-[#0d7ff2] hover:bg-[#0b6fd1] disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors"
           aria-label="Send message"
         >
-          <Send size={14} />
+          <Send size={14} className="sm:size-4" />
         </button>
       </div>
     </div>

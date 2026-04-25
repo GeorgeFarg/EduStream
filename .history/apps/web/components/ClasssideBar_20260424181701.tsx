@@ -8,12 +8,6 @@ const StreamSideBar = () => {
   
   const basicLinks = [
     { key: 'home', label: 'HOME', href: '/', icon: <Home size={18} /> },
-    {
-      key: 'chat',
-      label: 'CHAT',
-      href: '/private-chat',
-      icon: <MessageSquare size={18} />,
-    },
     { 
       key: 'calendar', 
       label: 'CALENDAR', 

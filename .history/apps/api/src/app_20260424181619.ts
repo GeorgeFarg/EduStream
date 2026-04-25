@@ -11,7 +11,6 @@ import assignmentRoutes from "./routes/assignment.routes";
 import submissionRoutes from "./routes/submission.routes";
 import classRoutes from "./routes/class.routes";
 import chatRoutes from "./routes/chat.routes";
-import privateChatRoutes from "./routes/privateChat.routes";
 import { authenticate } from "./middleware/auth.middleware";
 
 const app = express();
