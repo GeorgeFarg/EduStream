@@ -12,12 +12,14 @@ interface Props {
   };
   onClick: () => void;
   onDelete: () => void;
+  onEdit: () => void;
 }
 
 export default function AssignmentCard({
   assignment,
   onClick,
   onDelete,
+  onEdit,
 }: Props) {
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -75,13 +77,21 @@ export default function AssignmentCard({
               className="absolute right-0 top-8 bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 shadow-lg rounded-xl w-32 p-2 text-sm z-20"
             >
               <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMenuOpen(false);
+                  onEdit(); // ← أضف
+                }}
                 className="block w-full text-left px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-neutral-700 text-gray-700 dark:text-gray-200"
               >
                 Edit
               </button>
 
               <button
-                onClick={onDelete}
+                      onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete();
+                    }}
                 className="block w-full text-left px-2 py-1 text-red-500 rounded hover:bg-gray-100 dark:hover:bg-neutral-700"
               >
                 Delete

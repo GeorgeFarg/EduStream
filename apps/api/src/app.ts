@@ -11,7 +11,7 @@ import assignmentRoutes from "./routes/assignment.routes";
 import submissionRoutes from "./routes/submission.routes";
 import classRoutes from "./routes/class.routes";
 import { authenticate } from "./middleware/auth.middleware";
-
+import path from 'path';
 const app = express();
 
 // Middleware for parsing JSON request bodies
@@ -28,7 +28,7 @@ app.use(
     credentials: true,
   }),
 );
-
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 // Logger middleware
 app.use((req: Request, res: Response, next) => {
   const start = Date.now();

@@ -49,3 +49,13 @@ export interface MaterialFolder {
   files: FileItem[]
   createdAt: string
 }
+// types/index.ts  (أضف fileUrl إذا لم يكن موجوداً)
+
+export interface Assignment {
+  id: string;
+  title: string;
+  description: string;
+  dueDate: string;
+  teacherName: string;
+  fileUrl?: string;
+}

@@ -5,6 +5,8 @@ import {
   createMaterial,
   getAllMaterials,
   getMaterialsByCategory,
+  renameMaterial,
+  deleteMaterial,
 } from '../services/material.service';
 import { ZodError } from 'zod';
 
@@ -102,6 +104,57 @@ export const getAllMaterialsController = async (
     res.status(200).json(materials);
   } catch (error) {
     // Pass errors to error handler middleware
+    next(error);
+  }
+};
+/**
+ * Delete a material
+ * @route DELETE /api/materials/:id
+ */
+export const deleteMaterialController = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const materialId = parseInt(req.params.id, 10);
+    if (isNaN(materialId)) {
+      res.status(400).json({ error: { message: 'Invalid material ID', code: 'INVALID_ID' } });
+      return;
+    }
+
+    await deleteMaterial(materialId, req.user!.id);
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Rename a material
+ * @route PATCH /api/materials/:id
+ */
+export const renameMaterialController = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const materialId = parseInt(req.params.id, 10);
+    if (isNaN(materialId)) {
+      res.status(400).json({ error: { message: 'Invalid material ID', code: 'INVALID_ID' } });
+      return;
+    }
+
+    const { title } = req.body;
+    if (!title || typeof title !== 'string') {
+      res.status(400).json({ error: { message: 'Title is required', code: 'VALIDATION_ERROR' } });
+      return;
+    }
+
+    const updated = await renameMaterial(materialId, title);
+    res.status(200).json(updated);
+  } catch (error) {
     next(error);
   }
 };

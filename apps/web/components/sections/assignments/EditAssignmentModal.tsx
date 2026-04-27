@@ -1,54 +1,49 @@
-// components/sections/assignments/AddAssignmentModal.tsx
-// تأكد أن الـ modal يقبل loading و serverError و file
-
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Assignment } from "@/types";
 
-interface AddAssignmentData {
-  title: string;
-  description: string;
-  dueDate: string;
-  file?: File | null;
-}
-
-interface AddAssignmentModalProps {
+interface Props {
   open: boolean;
+  assignment: Assignment | null;
   onClose: () => void;
-  onAdd: (data: AddAssignmentData) => Promise<void>;
+  onSave: (data: { title: string; description: string; dueDate: string }) => Promise<void>;
   loading?: boolean;
   serverError?: string | null;
 }
 
-export default function AddAssignmentModal({
+export default function EditAssignmentModal({
   open,
+  assignment,
   onClose,
-  onAdd,
+  onSave,
   loading = false,
   serverError = null,
-}: AddAssignmentModalProps) {
+}: Props) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
-  const [file, setFile] = useState<File | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  if (!open) return null;
+  // ابدأ الـ form بقيم الـ assignment الحالية
+  useEffect(() => {
+    if (assignment) {
+      setTitle(assignment.title);
+      setDescription(assignment.description);
+      // حوّل الـ ISO string لـ datetime-local format
+      setDueDate(assignment.dueDate.slice(0, 16));
+    }
+  }, [assignment]);
 
-  const handleSubmit = async () => {
+  if (!open || !assignment) return null;
+
+  const handleSave = async () => {
     if (!title.trim() || !dueDate) {
       setValidationError("Title and due date are required.");
       return;
     }
     setValidationError(null);
-
-    await onAdd({ title: title.trim(), description: description.trim(), dueDate, file });
-
-    // Reset form only if modal closed (parent controls close)
-    setTitle("");
-    setDescription("");
-    setDueDate("");
-    setFile(null);
+    await onSave({ title: title.trim(), description: description.trim(), dueDate });
   };
 
   const displayError = validationError ?? serverError;
@@ -58,7 +53,7 @@ export default function AddAssignmentModal({
       <div className="bg-white dark:bg-neutral-900 rounded-3xl shadow-2xl w-full max-w-md p-8 space-y-5">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-            New Assignment
+            Edit Assignment
           </h2>
           <button
             onClick={onClose}
@@ -101,23 +96,8 @@ export default function AddAssignmentModal({
           />
         </div>
 
-        {/* File upload */}
-        <div>
-          <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">
-            Attachment (optional)
-          </label>
-          <label className="w-full border border-dashed border-blue-400 py-3 rounded-xl text-blue-600 dark:text-blue-400 flex justify-center cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition text-sm">
-            {file ? file.name : "+ Choose file"}
-            <input
-              type="file"
-              className="hidden"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            />
-          </label>
-        </div>
-
         <button
-          onClick={handleSubmit}
+          onClick={handleSave}
           disabled={loading}
           className="w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
@@ -127,7 +107,7 @@ export default function AddAssignmentModal({
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
             </svg>
           )}
-          {loading ? "Adding..." : "Add Assignment"}
+          {loading ? "Saving..." : "Save Changes"}
         </button>
       </div>
     </div>

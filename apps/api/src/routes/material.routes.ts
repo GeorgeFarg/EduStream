@@ -2,12 +2,25 @@ import { Router } from 'express';
 import {
   createMaterialController,
   getAllMaterialsController,
+  deleteMaterialController,
+  renameMaterialController,
 } from '../controllers/material.controller';
 import { authenticate } from '../middleware/auth.middleware';
 import { isTeacherInClass, isMemberOfClass } from '../middleware/classAuth';
 import { uploadMaterial } from '../middleware/upload.middleware';
 
 const router = Router();
+
+/**
+ * @route DELETE /api/materials/:id
+ * @access Private (Teachers only)
+ */
+router.delete(
+  '/:id',
+  authenticate,
+  isTeacherInClass,
+  deleteMaterialController
+);
 
 /**
  * @route GET /api/materials

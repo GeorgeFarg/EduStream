@@ -8,12 +8,31 @@ export const isTeacherInClass = async (
   next: NextFunction
 ) => {
   try {
-    const userId = (req as any).user?.userId;
-    // Check params or body for classId
-    const classId = Number(req.params.classId || req.body.classId);
-
+    const userId = (req as any).user?.id;
+    
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // جيب classId من params أو body أو query
+    let classId = Number(req.params.classId || req.query.classId);
+    console.log("CLASS###################", classId);
+    
+    // لو مفيش classId، جيبه من الـ assignment عن طريق الـ id
+    if (!classId && req.params.id) {
+      const assignmentId = parseInt(req.params.id, 10);
+      if (!isNaN(assignmentId)) {
+        const assignment = await prisma.assignment.findUnique({
+          where: { id: assignmentId },
+          select: { classId: true },
+        });
+
+        if (!assignment) {
+          return res.status(404).json({ error: 'Assignment not found' });
+        }
+
+        classId = assignment.classId;
+      }
     }
 
     if (!classId) {
@@ -32,6 +51,10 @@ export const isTeacherInClass = async (
     if (!membership || membership.role !== ClassRole.TEACHER) {
       return res.status(403).json({ error: 'Access denied: Teachers only' });
     }
+
+    req.memperShip = {
+      isTeacher: membership.role === "TEACHER",
+    };
 
     next();
   } catch (error) {

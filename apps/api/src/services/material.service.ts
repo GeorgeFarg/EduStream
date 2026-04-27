@@ -1,4 +1,6 @@
 import { prisma } from '../../lib/prisma';
+import fs from 'fs';
+import path from 'path';
 
 export interface CreateMaterialDTO {
   title: string;
@@ -127,4 +129,52 @@ export const getMaterialsByCategory = async (
     createdAt: material.createdAt,
     updatedAt: material.updatedAt,
   }));
+};
+/**
+ * Delete a material by ID
+ */
+export const deleteMaterial = async (
+  materialId: number,
+  teacherId: number
+): Promise<void> => {
+  const material = await prisma.material.findUnique({
+    where: { id: materialId },
+  });
+
+  if (!material) {
+    throw new Error('Material not found');
+  }
+
+  // حذف الملف الفعلي من الـ disk
+  const filePath = path.join(process.cwd(), material.fileUrl);
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+  }
+
+  await prisma.material.delete({ where: { id: materialId } });
+};
+
+/**
+ * Rename a material (update title)
+ */
+export const renameMaterial = async (
+  materialId: number,
+  title: string
+): Promise<MaterialResponse> => {
+  const material = await prisma.material.update({
+    where: { id: materialId },
+    data: { title },
+    include: { uploader: { select: { name: true } } },
+  });
+
+  return {
+    id: material.id,
+    title: material.title,
+    fileUrl: material.fileUrl,
+    category: material.category,
+    uploadedBy: material.uploadedBy,
+    uploaderName: material.uploader.name,
+    createdAt: material.createdAt,
+    updatedAt: material.updatedAt,
+  };
 };

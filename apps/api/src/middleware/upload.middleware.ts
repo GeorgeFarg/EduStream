@@ -1,6 +1,10 @@
+// apps/api/src/config/multer.config.ts
+
 import multer from 'multer';
 import type { FileFilterCallback } from 'multer';
 import type { Request } from 'express';
+import fs from 'fs';
+import path from 'path';
 import { config } from '../config/env';
 import {
   generateUniqueFilename,
@@ -9,25 +13,34 @@ import {
   ALLOWED_SUBMISSION_TYPES,
 } from '../utils/file.util';
 
-// Configure disk storage for uploaded files
+// ─── تأكد إن المجلدات موجودة عند بدء السيرفر ────────────────────────────────
+
+const submissionsDir = path.join(process.cwd(), 'uploads/submissions');
+const materialsDir   = path.join(process.cwd(), 'uploads/materials');
+
+if (!fs.existsSync(submissionsDir)) {
+  fs.mkdirSync(submissionsDir, { recursive: true });
+}
+if (!fs.existsSync(materialsDir)) {
+  fs.mkdirSync(materialsDir, { recursive: true });
+}
+
+// ─── Storage ──────────────────────────────────────────────────────────────────
+
 const storage = multer.diskStorage({
   destination: (req: Request, file: Express.Multer.File, cb) => {
-    // Determine destination based on the route
-    const isMaterial = req.path.includes('/materials');
-    const folder = isMaterial ? 'uploads/materials' : 'uploads/submissions';
+    const isMaterial = req.baseUrl.includes('/materials')
+    const folder = isMaterial ? materialsDir : submissionsDir; // ← absolute path
     cb(null, folder);
   },
   filename: (req: Request, file: Express.Multer.File, cb) => {
-    // Generate unique filename to prevent collisions
     const uniqueFilename = generateUniqueFilename(file.originalname);
     cb(null, uniqueFilename);
   },
 });
 
-/**
- * File filter for educational materials
- * Validates file types against ALLOWED_MATERIAL_TYPES
- */
+// ─── File Filters ─────────────────────────────────────────────────────────────
+
 const materialFileFilter = (
   req: Request,
   file: Express.Multer.File,
@@ -36,18 +49,10 @@ const materialFileFilter = (
   if (validateFileType(file.originalname, ALLOWED_MATERIAL_TYPES)) {
     cb(null, true);
   } else {
-    cb(
-      new Error(
-        `Invalid file type. Allowed types: ${ALLOWED_MATERIAL_TYPES.join(', ')}`
-      )
-    );
+    cb(new Error(`Invalid file type. Allowed types: ${ALLOWED_MATERIAL_TYPES.join(', ')}`));
   }
 };
 
-/**
- * File filter for assignment submissions
- * Validates file types against ALLOWED_SUBMISSION_TYPES
- */
 const submissionFileFilter = (
   req: Request,
   file: Express.Multer.File,
@@ -56,36 +61,20 @@ const submissionFileFilter = (
   if (validateFileType(file.originalname, ALLOWED_SUBMISSION_TYPES)) {
     cb(null, true);
   } else {
-    cb(
-      new Error(
-        `Invalid file type. Allowed types: ${ALLOWED_SUBMISSION_TYPES.join(', ')}`
-      )
-    );
+    cb(new Error(`Invalid file type. Allowed types: ${ALLOWED_SUBMISSION_TYPES.join(', ')}`));
   }
 };
 
-/**
- * Multer instance for material uploads
- * - Max file size: 10MB
- * - Allowed types: pdf, docx, pptx, xlsx, zip, jpg, png
- */
+// ─── Exports ──────────────────────────────────────────────────────────────────
+
 export const uploadMaterial = multer({
   storage,
   fileFilter: materialFileFilter,
-  limits: {
-    fileSize: config.upload.maxFileSize, // 10MB
-  },
+  limits: { fileSize: config.upload.maxFileSize },
 });
 
-/**
- * Multer instance for submission uploads
- * - Max file size: 10MB
- * - Allowed types: pdf, docx, zip
- */
 export const uploadSubmission = multer({
   storage,
   fileFilter: submissionFileFilter,
-  limits: {
-    fileSize: config.upload.maxFileSize, // 10MB
-  },
+  limits: { fileSize: config.upload.maxFileSize },
 });

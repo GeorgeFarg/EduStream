@@ -7,6 +7,8 @@ import {
   getAssignmentById,
 } from '../services/assignment.service';
 import { ZodError } from 'zod';
+import { prisma } from '../../lib/prisma';
+
 
 /**
  * Create a new assignment
@@ -131,6 +133,96 @@ export const getAssignmentByIdController = async (
     res.status(200).json(assignment);
   } catch (error) {
     // Pass errors to error handler middleware
+    next(error);
+  }
+};
+/**
+ * Delete an assignment
+ * @route DELETE /api/assignments/:id
+ */
+export const deleteAssignmentController = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const id = parseInt(req.params.id, 10);
+
+    if (isNaN(id)) {
+      res.status(400).json({
+        error: { message: "Invalid assignment ID", code: "INVALID_ID" },
+      });
+      return;
+    }
+
+    const teacherId = req.user!.id;
+
+    // تأكد إن الـ assignment موجود وإن المدرس هو صاحبه
+    const assignment = await prisma.assignment.findUnique({
+      where: { id },
+    });
+
+    if (!assignment) {
+      res.status(404).json({
+        error: { message: "Assignment not found", code: "NOT_FOUND" },
+      });
+      return;
+    }
+
+    if (assignment.teacherId !== teacherId) {
+      res.status(403).json({
+        error: { message: "Access denied", code: "FORBIDDEN" },
+      });
+      return;
+    }
+
+    await prisma.assignment.delete({ where: { id } });
+
+    res.status(200).json({ message: "Assignment deleted successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateAssignmentController = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      res.status(400).json({ error: { message: "Invalid ID", code: "INVALID_ID" } });
+      return;
+    }
+
+    const { title, description, dueDate } = req.body;
+    const teacherId = req.user!.id;
+
+    const assignment = await prisma.assignment.findUnique({ where: { id } });
+
+    if (!assignment) {
+      res.status(404).json({ error: { message: "Assignment not found", code: "NOT_FOUND" } });
+      return;
+    }
+
+    if (assignment.teacherId !== teacherId) {
+      res.status(403).json({ error: { message: "Access denied", code: "FORBIDDEN" } });
+      return;
+    }
+
+    const updated = await prisma.assignment.update({
+      where: { id },
+      data: {
+        title: title ?? assignment.title,
+        description: description ?? assignment.description,
+        dueDate: dueDate ? new Date(dueDate) : assignment.dueDate,
+      },
+      include: { teacher: true },
+    });
+
+    res.status(200).json(updated);
+  } catch (error) {
     next(error);
   }
 };

@@ -1,15 +1,23 @@
-import { z } from 'zod';
+// validators/assignment.validator.ts
+import { z } from "zod";
 
 export const createAssignmentSchema = z.object({
-    title: z.string().min(3, 'Title must be at least 3 characters').max(200, 'Title must not exceed 200 characters'),
-    description: z.string().min(10, 'Description must be at least 10 characters').max(2000, 'Description must not exceed 2000 characters'),
-    dueDate: z.string().datetime('Due date must be in ISO 8601 datetime format'),
-    classId: z.coerce.number().int().positive('Class ID must be a positive integer'),
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional().default(""),
+  dueDate: z.string().min(1, "Due date is required"),
+  classId: z
+    .union([z.string(), z.number()])
+    .transform((val) => Number(val))
+    .refine((val) => !isNaN(val) && val > 0, {
+      message: "classId must be a positive number",
+    }),
 });
 
+// ← أضف الـ schema ده
 export const gradeSubmissionSchema = z.object({
-    grade: z.number().min(0, 'Grade must be at least 0').max(100, 'Grade must not exceed 100'),
+  grade: z
+    .number()
+    .min(0, "Grade must be at least 0")
+    .max(100, "Grade cannot exceed 100"),
+  feedback: z.string().optional().default(""),
 });
-
-export type CreateAssignmentInput = z.infer<typeof createAssignmentSchema>;
-export type GradeSubmissionInput = z.infer<typeof gradeSubmissionSchema>;

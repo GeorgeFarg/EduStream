@@ -3,6 +3,8 @@ import {
   createAssignmentController,
   getAllAssignmentsController,
   getAssignmentByIdController,
+  deleteAssignmentController,
+  updateAssignmentController,
 } from '../controllers/assignment.controller';
 import { authenticate } from '../middleware/auth.middleware';
 import { isTeacherInClass, isMemberOfClass } from '../middleware/classAuth';
@@ -15,7 +17,7 @@ const router = Router();
  * @desc Get all assignments for a class
  * @access Private (Class members)
  */
-router.get('/', authenticate, isMemberOfClass, getAllAssignmentsController);
+router.get('/', authenticate, isTeacherInClass, getAllAssignmentsController);
 
 /**
  * @route GET /api/assignments/:id
@@ -36,5 +38,7 @@ router.post(
   isTeacherInClass,
   createAssignmentController
 );
+router.delete('/:id', authenticate,  deleteAssignmentController);
+router.patch('/:id', authenticate, updateAssignmentController);
 
 export default router;

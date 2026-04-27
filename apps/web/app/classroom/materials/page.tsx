@@ -5,134 +5,99 @@ import Navbar from "@/components/sections/classroom/Navbar";
 import SearchBar from "@/components/sections/classroom/SearchBar";
 import UploadBox from "@/components/sections/classroom/UploadBox";
 import WeekSection from "@/components/sections/classroom/WeekSection";
-import { Week, FileItem, FileType, Folder } from "@/types";
+import { useMaterials } from "@/hooks/useMaterials";
+import { mapCategoryToFileType } from "@/lib/materials";
+import { FileItem, Folder, Week } from "@/types";
 
-const initialWeeks: Week[] = [
-  { id: "1", title: "Week 1", folders: [], files: [] },
-  { id: "2", title: "Week 2", folders: [], files: [] },
-  { id: "3", title: "Week 3", folders: [], files: [] },
-];
+const CLASS_ID = 1;
+
+// ─── Loading Skeleton ─────────────────────────────────────────────────────────
+
+function MaterialsSkeleton() {
+  return (
+    <div className="space-y-10 mt-8 animate-pulse">
+      {[1, 2, 3].map((i) => (
+        <div
+          key={i}
+          className="bg-white dark:bg-zinc-900 rounded-xl p-4"
+        >
+          <div className="h-6 w-40 bg-gray-200 dark:bg-neutral-700 rounded mb-6" />
+          <div className="grid md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((j) => (
+              <div
+                key={j}
+                className="h-36 bg-gray-100 dark:bg-neutral-800 rounded-2xl"
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function MaterialsPage() {
+  const {
+    weeks,
+    loading,
+    error,
+    uploading,
+    uploadError,
+    uploadMaterial,
+    deleteFileFromWeek,
+    renameFileInWeek,
+    refetch,
+  } = useMaterials();
 
-  const [weeks, setWeeks] = useState<Week[]>(initialWeeks);
   const [search, setSearch] = useState("");
-  const [selectedWeek, setSelectedWeek] = useState("1");
+  const [selectedWeek, setSelectedWeek] = useState("pdf"); // default category
 
-  /* ===============================
-     Map MIME type → FileType
-  =============================== */
+  // ── Folder state (local-only — backend لا يدعم folders بعد) ─────────────────
+  const [localFolders, setLocalFolders] = useState<Record<string, Folder[]>>({});
 
-  const mapFileType = (type: string): FileType => {
-    if (type.includes("pdf")) return "pdf";
-    if (type.includes("word")) return "doc";
-    if (type.includes("video")) return "video";
-    if (type.includes("presentation")) return "ppt";
-    if (type.includes("zip")) return "zip";
-    return "link";
+  // ─── الـ weeks مع الـ local folders مدموجين ──────────────────────────────────
+  const mergedWeeks: Week[] = weeks.map((w) => ({
+    ...w,
+    folders: localFolders[w.id] ?? [],
+  }));
+
+  // ─── Upload Handler ───────────────────────────────────────────────────────────
+
+  const handleUpload = async (files: File[], weekId: string) => {
+    for (const file of files) {
+      await uploadMaterial({
+        title: file.name,
+        category: weekId, // weekId = category
+        classId: CLASS_ID,
+        file,
+      });
+    }
   };
 
-  /* ===============================
-     Upload Files
-  =============================== */
-
-  const handleUpload = (files: File[], weekId: string) => {
-
-    const formatted: FileItem[] = files.map((file) => ({
-      id: crypto.randomUUID(),
-      name: file.name,
-      size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-      type: mapFileType(file.type),
-      uploadDate: "Today",
-      url: URL.createObjectURL(file),
-    }));
-
-    setWeeks((prev) =>
-      prev.map((week) =>
-        week.id === weekId
-          ? { ...week, files: [...week.files, ...formatted] }
-          : week
-      )
-    );
-  };
-
-  /* ===============================
-     File Actions
-  =============================== */
-
-  const renameFile = (fileId: string, newName: string) => {
-
-    setWeeks((prev) =>
-      prev.map((week) => ({
-        ...week,
-        files: week.files.map((file) =>
-          file.id === fileId ? { ...file, name: newName } : file
-        ),
-      }))
-    );
-  };
-
-  const deleteFile = (fileId: string) => {
-
-    setWeeks((prev) =>
-      prev.map((week) => ({
-        ...week,
-        files: week.files.filter((file) => file.id !== fileId),
-      }))
-    );
-  };
-
-  /* ===============================
-     Add Week OR Folder
-  =============================== */
+  // ─── Add Week / Folder ────────────────────────────────────────────────────────
 
   const addFolderOrWeek = () => {
-
     const action = prompt(
-`What do you want to create?
-
-1 = Add Week
-2 = Add Folder inside selected week`
+      `What do you want to create?\n\n1 = Add Category (Week)\n2 = Add Folder inside selected category`
     );
-
     if (action === "1") addWeek();
     if (action === "2") addFolder();
   };
 
-  /* ===============================
-     Add Week
-  =============================== */
-
   const addWeek = () => {
-
-    const nextWeekNumber = weeks.length + 1;
-
-    const name = prompt(
-      `Write the name for Week ${nextWeekNumber}\nExample: Algorithms`
+    const name = prompt("Category name (e.g. pdf, video, doc)");
+    if (!name) return;
+    // Weeks جاية من الـ API — لو category جديد هيظهر بعد أول upload فيه
+    alert(
+      `Category "${name}" will appear automatically after you upload a file with this category.`
     );
-
-    const newWeek: Week = {
-      id: crypto.randomUUID(),
-      title: name
-        ? `Week ${nextWeekNumber} - ${name}`
-        : `Week ${nextWeekNumber}`,
-      folders: [],
-      files: [],
-    };
-
-    setWeeks((prev) => [...prev, newWeek]);
   };
 
-  /* ===============================
-     Add Folder
-  =============================== */
-
   const addFolder = () => {
-
     const name = prompt("Folder name");
-
     if (!name) return;
-
     const newFolder: Folder = {
       id: crypto.randomUUID(),
       name,
@@ -140,104 +105,67 @@ export default function MaterialsPage() {
       files: [],
       folders: [],
     };
-
-    setWeeks((prev) =>
-      prev.map((week) =>
-        week.id === selectedWeek
-          ? { ...week, folders: [...week.folders, newFolder] }
-          : week
-      )
-    );
+    setLocalFolders((prev) => ({
+      ...prev,
+      [selectedWeek]: [...(prev[selectedWeek] ?? []), newFolder],
+    }));
   };
 
-  /* ===============================
-     Delete Folder
-  =============================== */
+  // ─── Folder Actions ───────────────────────────────────────────────────────────
 
   const deleteFolder = (weekId: string, folderId: string) => {
-
-    setWeeks((prev) =>
-      prev.map((week) =>
-        week.id === weekId
-          ? {
-              ...week,
-              folders: week.folders.filter((f) => f.id !== folderId),
-            }
-          : week
-      )
-    );
+    setLocalFolders((prev) => ({
+      ...prev,
+      [weekId]: (prev[weekId] ?? []).filter((f) => f.id !== folderId),
+    }));
   };
 
-  /* ===============================
-     Upload to Folder
-  =============================== */
-
   const uploadToFolder = (weekId: string, folderId: string) => {
-
     const input = document.createElement("input");
     input.type = "file";
     input.multiple = true;
-
-    input.onchange = (e: any) => {
-
+    input.onchange = async (e: any) => {
       const files: File[] = Array.from(e.target.files);
-
       const formatted: FileItem[] = files.map((file) => ({
         id: crypto.randomUUID(),
         name: file.name,
         size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-        type: mapFileType(file.type),
+        type: mapCategoryToFileType(file.type),
         uploadDate: "Today",
         url: URL.createObjectURL(file),
       }));
-
-      setWeeks((prev) =>
-        prev.map((week) => {
-
-          if (week.id !== weekId) return week;
-
-          return {
-            ...week,
-            folders: week.folders.map((folder) =>
-              folder.id === folderId
-                ? { ...folder, files: [...folder.files, ...formatted] }
-                : folder
-            ),
-          };
-
-        })
-      );
+      setLocalFolders((prev) => ({
+        ...prev,
+        [weekId]: (prev[weekId] ?? []).map((f) =>
+          f.id === folderId
+            ? { ...f, files: [...f.files, ...formatted] }
+            : f
+        ),
+      }));
     };
-
     input.click();
   };
 
+  // ─── Render ───────────────────────────────────────────────────────────────────
+
   return (
-
     <div className="min-h-screen bg-gray-100 dark:bg-neutral-900 transition-colors">
-
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-6 py-8">
 
         {/* Header */}
-
         <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
-
           <div>
-
             <h1 className="text-3xl font-semibold text-gray-800 dark:text-white">
               Course Materials
             </h1>
-
             <p className="text-gray-500 dark:text-gray-400">
               Manage and access all lecture notes and files.
             </p>
-
           </div>
 
           <div className="flex items-center gap-3">
-
             <SearchBar value={search} onChange={setSearch} />
 
             <select
@@ -245,7 +173,7 @@ export default function MaterialsPage() {
               onChange={(e) => setSelectedWeek(e.target.value)}
               className="px-3 py-2 rounded-xl border bg-white dark:bg-neutral-800 dark:border-neutral-700 dark:text-white"
             >
-              {weeks.map((week) => (
+              {mergedWeeks.map((week) => (
                 <option key={week.id} value={week.id}>
                   {week.title}
                 </option>
@@ -258,40 +186,82 @@ export default function MaterialsPage() {
             >
               + Add Folder
             </button>
-
           </div>
-
         </div>
 
-        {/* Upload */}
+        {/* Upload Error */}
+        {uploadError && (
+          <div className="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-red-600 dark:text-red-400 text-sm">
+            ⚠️ {uploadError}
+          </div>
+        )}
 
-        <UploadBox
-          weeks={weeks}
-          selectedWeek={selectedWeek}
-          onUpload={handleUpload}
-        />
-
-        {/* Weeks */}
-
-        <div className="space-y-10 mt-8">
-
-          {weeks.map((week) => (
-            <WeekSection
-              key={week.id}
-              week={week}
-              search={search}
-              onRename={renameFile}
-              onDelete={deleteFile}
-              onRenameFolder={() => {}}
-              onDeleteFolder={deleteFolder}
-              onUploadFolder={uploadToFolder}
-            />
-          ))}
-
+        {/* Upload Box */}
+        <div className="relative">
+          <UploadBox
+            weeks={mergedWeeks}
+            selectedWeek={selectedWeek}
+            onUpload={handleUpload}
+          />
+          {/* Loading overlay أثناء الرفع */}
+          {uploading && (
+            <div className="absolute inset-0 bg-white/60 dark:bg-neutral-900/60 rounded-2xl flex items-center justify-center">
+              <div className="flex items-center gap-3 text-blue-600 dark:text-blue-400 font-medium">
+                <svg
+                  className="animate-spin h-5 w-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8z"
+                  />
+                </svg>
+                Uploading...
+              </div>
+            </div>
+          )}
         </div>
 
+        {/* Content */}
+        {loading ? (
+          <MaterialsSkeleton />
+        ) : error ? (
+          <div className="mt-8 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 text-center">
+            <p className="text-red-600 dark:text-red-400 font-medium">{error}</p>
+            <button
+              onClick={refetch}
+              className="mt-3 text-sm text-red-500 underline hover:text-red-700"
+            >
+              Try again
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-10 mt-8">
+            {mergedWeeks.map((week) => (
+              <WeekSection
+                key={week.id}
+                week={week}
+                search={search}
+                onRename={renameFileInWeek}
+                onDelete={deleteFileFromWeek}
+                onRenameFolder={() => {}}
+                onDeleteFolder={deleteFolder}
+                onUploadFolder={uploadToFolder}
+              />
+            ))}
+          </div>
+        )}
       </div>
-
     </div>
   );
 }
