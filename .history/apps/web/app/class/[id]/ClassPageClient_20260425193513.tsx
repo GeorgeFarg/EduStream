@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { io, Socket } from "socket.io-client";
 import Modal from "@/components/Cardsmodel";
 import PostContent from "./PostContent";
 import ClassBanner from "./classbanner";
@@ -35,7 +34,7 @@ export default function ClassPage({ initialAnnouncements, classId, className }: 
     setIsTeacher(initialAnnouncements.memperShip?.isTeacher || false);
   }, [initialAnnouncements]);
 
-  // Poll for active meeting (fallback)
+  // Poll for active meeting
   const fetchActiveMeeting = useCallback(async () => {
     try {
       const res = await fetch(`${apiBaseUrl}/api/classes/${classId}/meetings/active`, {
@@ -55,35 +54,6 @@ export default function ClassPage({ initialAnnouncements, classId, className }: 
     const interval = setInterval(fetchActiveMeeting, 10000);
     return () => clearInterval(interval);
   }, [fetchActiveMeeting]);
-
-  // Real-time socket for class-level meeting updates
-  useEffect(() => {
-    if (!apiBaseUrl) return;
-    const socket: Socket = io(apiBaseUrl, {
-      withCredentials: true,
-      transports: ["websocket", "polling"],
-    });
-
-    socket.on("connect", () => {
-      console.log("ClassPage socket connected");
-    });
-
-    socket.on("meeting-created", ({ classId: evtClassId, meeting }: { classId: number; meeting: MeetingInfo }) => {
-      if (String(evtClassId) === classId) {
-        setActiveMeeting(meeting);
-      }
-    });
-
-    socket.on("meeting-ended-global", ({ classId: evtClassId }: { classId: number; meetingId: number }) => {
-      if (String(evtClassId) === classId) {
-        setActiveMeeting(null);
-      }
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [classId]);
 
   const tabs: { key: TabType; label: string; icon: React.ReactNode }[] = [
     { key: "stream", label: "Stream", icon: <Megaphone size={16} /> },
@@ -127,55 +97,6 @@ export default function ClassPage({ initialAnnouncements, classId, className }: 
         {activeTab === "stream" && (
           <div className="h-full overflow-y-auto p-4 md:p-6">
             <div className="max-w-3xl mx-auto">
-              {/* Meeting Quick Action */}
-              {activeMeeting && (
-                <div className="mb-6 rounded-2xl border border-red-500/30 bg-red-500/5 p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
-                        <Radio size={18} className="text-red-400" />
-                      </div>
-                      <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-red-500 border-2 border-[#0a0a0a] animate-pulse" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-white">{activeMeeting.title}</p>
-                      <p className="text-xs text-red-400/80">
-                        Live · {activeMeeting.participants?.length || 0} in meeting
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setActiveTab("meeting")}
-                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2"
-                  >
-                    <Video size={14} />
-                    Join Now
-                  </button>
-                </div>
-              )}
-
-              {/* Teacher Start Meeting Button (when no active meeting) */}
-              {isTeacher && !activeMeeting && (
-                <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.02] p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#0d7ff2]/20 flex items-center justify-center">
-                      <Video size={18} className="text-[#0d7ff2]" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-white">Start a Live Meeting</p>
-                      <p className="text-xs text-white/40">Begin a video class for your students</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setActiveTab("meeting")}
-                    className="bg-[#0d7ff2] hover:bg-[#0d7ff2]/80 text-white px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2"
-                  >
-                    <Video size={14} />
-                    Start Meeting
-                  </button>
-                </div>
-              )}
-
               <div className="flex justify-end mb-6">
                 {announcements.memperShip?.isTeacher && (
                   <button
@@ -244,7 +165,8 @@ export default function ClassPage({ initialAnnouncements, classId, className }: 
         {/* MEETING TAB */}
         {activeTab === "meeting" && (
           <div className="h-full">
-<ClassMeeting classId={classId} />          </div>
+            <ClassMeeting classId={classId} className={className} />
+          </div>
         )}
       </div>
 

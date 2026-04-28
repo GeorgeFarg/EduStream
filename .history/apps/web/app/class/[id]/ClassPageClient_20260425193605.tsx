@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { io, Socket } from "socket.io-client";
 import Modal from "@/components/Cardsmodel";
 import PostContent from "./PostContent";
 import ClassBanner from "./classbanner";
@@ -35,7 +34,7 @@ export default function ClassPage({ initialAnnouncements, classId, className }: 
     setIsTeacher(initialAnnouncements.memperShip?.isTeacher || false);
   }, [initialAnnouncements]);
 
-  // Poll for active meeting (fallback)
+  // Poll for active meeting
   const fetchActiveMeeting = useCallback(async () => {
     try {
       const res = await fetch(`${apiBaseUrl}/api/classes/${classId}/meetings/active`, {
@@ -55,35 +54,6 @@ export default function ClassPage({ initialAnnouncements, classId, className }: 
     const interval = setInterval(fetchActiveMeeting, 10000);
     return () => clearInterval(interval);
   }, [fetchActiveMeeting]);
-
-  // Real-time socket for class-level meeting updates
-  useEffect(() => {
-    if (!apiBaseUrl) return;
-    const socket: Socket = io(apiBaseUrl, {
-      withCredentials: true,
-      transports: ["websocket", "polling"],
-    });
-
-    socket.on("connect", () => {
-      console.log("ClassPage socket connected");
-    });
-
-    socket.on("meeting-created", ({ classId: evtClassId, meeting }: { classId: number; meeting: MeetingInfo }) => {
-      if (String(evtClassId) === classId) {
-        setActiveMeeting(meeting);
-      }
-    });
-
-    socket.on("meeting-ended-global", ({ classId: evtClassId }: { classId: number; meetingId: number }) => {
-      if (String(evtClassId) === classId) {
-        setActiveMeeting(null);
-      }
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [classId]);
 
   const tabs: { key: TabType; label: string; icon: React.ReactNode }[] = [
     { key: "stream", label: "Stream", icon: <Megaphone size={16} /> },
@@ -244,7 +214,8 @@ export default function ClassPage({ initialAnnouncements, classId, className }: 
         {/* MEETING TAB */}
         {activeTab === "meeting" && (
           <div className="h-full">
-<ClassMeeting classId={classId} />          </div>
+            <ClassMeeting classId={classId} className={className} />
+          </div>
         )}
       </div>
 

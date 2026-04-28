@@ -1,0 +1,372 @@
+"use client";
+
+import { useEffect, useRef, useState, useCallback } from "react";
+import { io, Socket } from "socket.io-client";
+import { apiBaseUrl } from "@/config/env";
+
+export interface ParticipantState {
+  isMicOn: boolean;
+  isCameraOn: boolean;
+  isScreenSharing: boolean;
+}
+
+export interface MeetingMessage {
+  id: number;
+  content: string;
+  senderId: number;
+  senderName: string;
+  createdAt: string;
+}
+
+export interface MeetingParticipant {
+  id: number;
+  meetingId: number;
+  userId: number;
+  joinedAt: string;
+  leftAt?: string | null;
+  user: {
+    id: number;
+    name: string;
+    email: string;
+  };
+}
+
+export function ClassPage(meetingId: number | null) {
+  const socketRef = useRef<Socket | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [participants, setParticipants] = useState<MeetingParticipant[]>([]);
+  const [participantStates, setParticipantStates] = useState<
+    Record<number, ParticipantState>
+  >({});
+  const [messages, setMessages] = useState<MeetingMessage[]>([]);
+  const [meetingEnded, setMeetingEnded] = useState(false);
+  const [remoteStreams, setRemoteStreams] = useState<
+    Record<number, MediaStream>
+  >({});
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+
+  // ── Refs (never cause re-renders) ─────────────────────────────────────────
+  const peerConnectionsRef = useRef<Record<number, RTCPeerConnection>>({});
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const currentUserIdRef = useRef<number | null>(null);
+  const meetingIdRef = useRef<number | null>(meetingId);
+  const participantsRef = useRef<MeetingParticipant[]>([]);
+
+  // Keep refs in sync
+  useEffect(() => { currentUserIdRef.current = currentUserId; }, [currentUserId]);
+  useEffect(() => { meetingIdRef.current = meetingId; }, [meetingId]);
+  useEffect(() => { participantsRef.current = participants; }, [participants]);
+
+  // ── initPeerConnection ────────────────────────────────────────────────────
+  // ✅ Declared BEFORE the socket useEffect so it's available in the closure
+  const initPeerConnection = useCallback((targetUserId: number): RTCPeerConnection => {
+    if (peerConnectionsRef.current[targetUserId]) {
+      peerConnectionsRef.current[targetUserId].close();
+    }
+
+    const pc = new RTCPeerConnection({
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+      ],
+    });
+    peerConnectionsRef.current[targetUserId] = pc;
+
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => {
+        pc.addTrack(track, localStreamRef.current!);
+      });
+    }
+
+    pc.ontrack = (event) => {
+      const remoteStream = event.streams[0];
+      if (!remoteStream) return;
+      setRemoteStreams((prev) => ({ ...prev, [targetUserId]: remoteStream }));
+    };
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate && socketRef.current) {
+        socketRef.current.emit("webrtc-ice-candidate", {
+          meetingId: meetingIdRef.current,
+          targetUserId,
+          candidate: event.candidate,
+        });
+      }
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      if (["failed", "disconnected"].includes(pc.iceConnectionState)) {
+        console.warn(`ICE ${pc.iceConnectionState} for user ${targetUserId}`);
+      }
+    };
+
+    const selfId = currentUserIdRef.current;
+    if (selfId !== null && selfId < targetUserId) {
+      const startOffer = async () => {
+        try {
+          if (pc.signalingState !== "stable") return;
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          socketRef.current?.emit("webrtc-offer", {
+            meetingId: meetingIdRef.current,
+            targetUserId,
+            offer,
+          });
+        } catch (err) {
+          console.error("Error creating offer:", err);
+        }
+      };
+
+      if (localStreamRef.current && localStreamRef.current.getTracks().length > 0) {
+        startOffer();
+      } else {
+        pc.onnegotiationneeded = () => {
+          startOffer();
+          pc.onnegotiationneeded = null;
+        };
+      }
+    }
+
+    return pc;
+  }, []); // uses refs only
+
+  // ── getOrCreatePeerConnection ─────────────────────────────────────────────
+  const getOrCreatePeerConnection = useCallback((targetUserId: number): RTCPeerConnection => {
+    return peerConnectionsRef.current[targetUserId] ?? initPeerConnection(targetUserId);
+  }, [initPeerConnection]);
+
+  // ── Socket setup ──────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!apiBaseUrl) return;
+
+    const socket = io(apiBaseUrl, {
+      withCredentials: true,
+      transports: ["websocket", "polling"],
+    });
+    socketRef.current = socket;
+
+    socket.on("connect", () => {
+      console.log("Socket connected:", socket.id);
+      setIsConnected(true);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("Socket disconnected");
+      setIsConnected(false);
+    });
+
+    socket.on("connect_error", (err) => {
+      console.error("Socket connection error:", err.message);
+    });
+
+    socket.on("meeting-joined", ({ userId }: { userId: number }) => {
+      setCurrentUserId(userId);
+      currentUserIdRef.current = userId;
+    });
+
+    socket.on("meeting-state", ({ participants: p }: { participants: MeetingParticipant[] }) => {
+      setParticipants(p);
+      participantsRef.current = p;
+      const selfId = currentUserIdRef.current;
+      p.forEach((participant) => {
+        if (participant.userId !== selfId) {
+          initPeerConnection(participant.userId);
+        }
+      });
+    });
+
+    socket.on("participant-joined", ({ participants: p }: { participants: MeetingParticipant[] }) => {
+      setParticipants(p);
+      participantsRef.current = p;
+      const selfId = currentUserIdRef.current;
+      p.forEach((participant) => {
+        if (participant.userId !== selfId && !peerConnectionsRef.current[participant.userId]) {
+          initPeerConnection(participant.userId);
+        }
+      });
+    });
+
+    socket.on("participant-left", ({ userId, participants: p }: { userId: number; participants: MeetingParticipant[] }) => {
+      setParticipants(p);
+      participantsRef.current = p;
+      const pc = peerConnectionsRef.current[userId];
+      if (pc) {
+        pc.close();
+        delete peerConnectionsRef.current[userId];
+      }
+      setRemoteStreams((prev) => {
+        const { [userId]: _, ...rest } = prev;
+        return rest;
+      });
+    });
+
+    socket.on("participant-mic-changed", ({ userId, isMicOn }: { userId: number; isMicOn: boolean }) => {
+      setParticipantStates((prev) => ({
+        ...prev,
+        [userId]: { ...(prev[userId] || { isCameraOn: true, isScreenSharing: false }), isMicOn },
+      }));
+    });
+
+    socket.on("participant-camera-changed", ({ userId, isCameraOn }: { userId: number; isCameraOn: boolean }) => {
+      setParticipantStates((prev) => ({
+        ...prev,
+        [userId]: { ...(prev[userId] || { isMicOn: true, isScreenSharing: false }), isCameraOn },
+      }));
+    });
+
+    socket.on("participant-screen-share-changed", ({ userId, isScreenSharing }: { userId: number; isScreenSharing: boolean }) => {
+      setParticipantStates((prev) => ({
+        ...prev,
+        [userId]: { ...(prev[userId] || { isMicOn: true, isCameraOn: true }), isScreenSharing },
+      }));
+    });
+
+    socket.on("webrtc-offer", async ({ userId, offer }: { userId: number; offer: RTCSessionDescriptionInit }) => {
+      const pc = getOrCreatePeerConnection(userId);
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      socket.emit("webrtc-answer", {
+        meetingId: meetingIdRef.current,
+        targetUserId: userId,
+        answer,
+      });
+    });
+
+    socket.on("webrtc-answer", async ({ userId, answer }: { userId: number; answer: RTCSessionDescriptionInit }) => {
+      const pc = peerConnectionsRef.current[userId];
+      if (pc && pc.signalingState === "have-local-offer") {
+        await pc.setRemoteDescription(new RTCSessionDescription(answer));
+      }
+    });
+
+    socket.on("webrtc-ice-candidate", async ({ userId, candidate }: { userId: number; candidate: RTCIceCandidateInit }) => {
+      const pc = peerConnectionsRef.current[userId];
+      if (pc) {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (err) {
+          console.warn("Failed to add ICE candidate:", err);
+        }
+      }
+    });
+
+    socket.on("meeting-chat-message", (msg: MeetingMessage) => {
+      setMessages((prev) => [...prev, msg]);
+    });
+
+    socket.on("meeting-ended", () => {
+      setMeetingEnded(true);
+    });
+
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+      Object.values(peerConnectionsRef.current).forEach((pc) => pc.close());
+      peerConnectionsRef.current = {};
+      localStreamRef.current = null;
+    };
+  }, [initPeerConnection, getOrCreatePeerConnection]);
+
+  // ── Join / leave room ─────────────────────────────────────────────────────
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket || !isConnected) return;
+
+    if (meetingId) {
+      socket.emit("join-meeting", { meetingId });
+      setMeetingEnded(false);
+      setMessages([]);
+    }
+
+    return () => {
+      if (meetingId) socket.emit("leave-meeting", { meetingId });
+      Object.values(peerConnectionsRef.current).forEach((pc) => pc.close());
+      peerConnectionsRef.current = {};
+      setRemoteStreams({});
+    };
+  }, [meetingId, isConnected]);
+
+  // ── initLocalStream ───────────────────────────────────────────────────────
+  const initLocalStream = useCallback((stream: MediaStream) => {
+    localStreamRef.current = stream;
+
+    Object.entries(peerConnectionsRef.current).forEach(([userIdStr, pc]) => {
+      const targetUserId = Number(userIdStr);
+      stream.getTracks().forEach((track) => {
+        const existing = pc.getSenders().find((s) => s.track?.kind === track.kind);
+        if (!existing) pc.addTrack(track, stream);
+      });
+      const selfId = currentUserIdRef.current;
+      if (selfId !== null && selfId < targetUserId) {
+        pc.createOffer()
+          .then((offer) => pc.setLocalDescription(offer))
+          .then(() => {
+            socketRef.current?.emit("webrtc-offer", {
+              meetingId: meetingIdRef.current,
+              targetUserId,
+              offer: pc.localDescription,
+            });
+          })
+          .catch((err) => console.error("Renegotiation error:", err));
+      }
+    });
+
+    const selfId = currentUserIdRef.current;
+    participantsRef.current.forEach((p) => {
+      if (p.userId !== selfId && !peerConnectionsRef.current[p.userId]) {
+        initPeerConnection(p.userId);
+      }
+    });
+  }, [initPeerConnection]);
+
+  // ── replaceVideoTrack ─────────────────────────────────────────────────────
+  const replaceVideoTrack = useCallback((newTrack: MediaStreamTrack | null) => {
+    if (!newTrack) return;
+    Object.values(peerConnectionsRef.current).forEach((pc) => {
+      const sender = pc.getSenders().find((s) => s.track?.kind === "video");
+      if (sender) {
+        sender.replaceTrack(newTrack).catch((err) =>
+          console.error("Error replacing video track:", err)
+        );
+      }
+    });
+  }, []);
+
+  // ── Emitters ──────────────────────────────────────────────────────────────
+  const toggleMic = useCallback((isMicOn: boolean) => {
+    if (!socketRef.current || !meetingIdRef.current) return;
+    socketRef.current.emit("toggle-mic", { meetingId: meetingIdRef.current, isMicOn });
+  }, []);
+
+  const toggleCamera = useCallback((isCameraOn: boolean) => {
+    if (!socketRef.current || !meetingIdRef.current) return;
+    socketRef.current.emit("toggle-camera", { meetingId: meetingIdRef.current, isCameraOn });
+  }, []);
+
+  const toggleScreenShare = useCallback((isScreenSharing: boolean) => {
+    if (!socketRef.current || !meetingIdRef.current) return;
+    socketRef.current.emit("screen-share", { meetingId: meetingIdRef.current, isScreenSharing });
+  }, []);
+
+  const sendChatMessage = useCallback((content: string) => {
+    if (!socketRef.current || !meetingIdRef.current) return;
+    socketRef.current.emit("meeting-chat", { meetingId: meetingIdRef.current, content });
+  }, []);
+
+  return {
+    isConnected,
+    currentUserId,
+    participants,
+    participantStates,
+    messages,
+    meetingEnded,
+    remoteStreams,
+    initLocalStream,
+    replaceVideoTrack,
+    toggleMic,
+    toggleCamera,
+    toggleScreenShare,
+    sendChatMessage,
+  };
+}

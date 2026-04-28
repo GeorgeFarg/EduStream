@@ -1,5 +1,5 @@
 import { apiBaseUrl } from '@/config/env';
-import ClassPage from './ClassPageClient';
+import {ClassPage} from './ClassPageClient';
 import React from 'react'
 import { cookies } from 'next/headers';
 import { Announcement_return } from '@/types/announcments';

@@ -5,8 +5,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  // Connection URL moved to prisma.config.ts
 }
-
 enum ClassRole {
   TEACHER
   STUDENT

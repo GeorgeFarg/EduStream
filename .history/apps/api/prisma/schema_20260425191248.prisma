@@ -208,7 +208,6 @@ model Meeting {
   // Relations
   class       Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
   creator     User     @relation(fields: [createdBy], references: [id])
-  participants MeetingParticipant[]
 
   @@index([classId])
   @@index([isActive])

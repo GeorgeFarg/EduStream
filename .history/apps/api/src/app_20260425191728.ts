@@ -91,7 +91,6 @@ app.use("/api/auth", authRoutes);
 app.use(authenticate);
 app.use("/api/classes", classRoutes);
 app.use("/api/classes/:classId/chat", chatRoutes);
-app.use("/api/classes/:classId/meetings", meetingRoutes);
 app.use("/api/private-chat", privateChatRoutes);
 app.use("/api/announcements", announcementRoutes);
 app.use("/api/materials", materialRoutes);

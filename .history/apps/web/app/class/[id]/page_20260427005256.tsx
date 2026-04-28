@@ -63,7 +63,7 @@ const ClassDetails = async ({
     const [initialAnnouncements, className] = await Promise.all([
         getAnnouncments(id),
         getClassName(id),
-    ]);     
+    ]);
 
     return (
         <div><ClassPage initialAnnouncements={initialAnnouncements} classId={id} className={className} /></div>

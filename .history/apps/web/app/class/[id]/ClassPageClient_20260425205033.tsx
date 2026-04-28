@@ -244,7 +244,8 @@ export default function ClassPage({ initialAnnouncements, classId, className }: 
         {/* MEETING TAB */}
         {activeTab === "meeting" && (
           <div className="h-full">
-<ClassMeeting classId={classId} />          </div>
+            <ClassMeeting classId={classId} className={className} />
+          </div>
         )}
       </div>
 

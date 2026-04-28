@@ -29,8 +29,6 @@ model User {
   ownedClasses  Class[] // Classes created by this user
   sessions      Session[]
   chatMessages  ChatMessage[]
-  meetings      Meeting[]
-  meetingParticipants MeetingParticipant[]
   sentMessages    PrivateMessage[] @relation("SentMessages")
   receivedMessages PrivateMessage[] @relation("ReceivedMessages")
   
@@ -53,7 +51,6 @@ model Class {
   materials     Material[]
   assignments   Assignment[]
   chatMessages  ChatMessage[]
-  meetings      Meeting[]
 
   @@index([code])
   @@index([ownerId])
@@ -208,7 +205,6 @@ model Meeting {
   // Relations
   class       Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
   creator     User     @relation(fields: [createdBy], references: [id])
-  participants MeetingParticipant[]
 
   @@index([classId])
   @@index([isActive])
