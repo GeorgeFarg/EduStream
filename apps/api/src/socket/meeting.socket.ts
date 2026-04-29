@@ -18,6 +18,7 @@ interface MediaState {
   isMicOn: boolean;
   isCameraOn: boolean;
   isScreenSharing: boolean;
+  isHandRaised: boolean;
 }
 const meetingMediaStates: Map<string, Map<number, MediaState>> = new Map();
 
@@ -111,6 +112,7 @@ export function initializeMeetingSocket(io: Server) {
         isMicOn: false,
         isCameraOn: false,
         isScreenSharing: false,
+        isHandRaised: false,
       });
       meetingMediaHealthStates.get(room)!.set(socket.user.id, {
         micEnabled: false,
@@ -148,6 +150,7 @@ export function initializeMeetingSocket(io: Server) {
           isMicOn: false,
           isCameraOn: false,
           isScreenSharing: false,
+          isHandRaised: false,
         },
         mediaHealth: mediaHealthStates?.get(p.userId) || {
           micEnabled: false,
@@ -275,6 +278,16 @@ export function initializeMeetingSocket(io: Server) {
       socket.to(room).emit("participant-screen-share-changed", {
         userId: socket.user!.id,
         isScreenSharing,
+      });
+    });
+
+    socket.on("toggle-hand", ({ meetingId, isHandRaised }) => {
+      const room = `meeting:${meetingId}`;
+      const state = meetingMediaStates.get(room)?.get(socket.user!.id);
+      if (state) state.isHandRaised = isHandRaised;
+      io.to(room).emit("participant-hand-raised-changed", {
+        userId: socket.user!.id,
+        isHandRaised,
       });
     });
 

@@ -299,20 +299,29 @@ export default function ClassMeeting({ classId }: { classId: string }) {
     } catch (e) {}
   };
 
-  const toggleMic = () => {
-    if (localStream) {
-      const t = localStream.getAudioTracks()[0];
-      if (t) {
-        t.enabled = !t.enabled;
-        setIsMicOn(t.enabled);
-        emitToggleMic(t.enabled);
-        if (t.enabled) {
-          replaceAudioTrack(t);
-        }
-        refreshLocalMediaHealth();
-      }
+  const toggleMic = async () => {
+  if (!localStream) return;
+  let audioTrack = localStream.getAudioTracks()[0];
+
+  if (!audioTrack) {
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      audioTrack = s.getAudioTracks()[0];
+      if (!audioTrack) return; // ✅ guard here
+      localStream.addTrack(audioTrack);
+    } catch (e) {
+      console.error("Mic access denied", e);
+      return;
     }
-  };
+  }
+
+  // TypeScript now knows audioTrack is defined past this point
+  audioTrack.enabled = !audioTrack.enabled;
+  setIsMicOn(audioTrack.enabled);
+  emitToggleMic(audioTrack.enabled);
+  replaceAudioTrack(audioTrack);
+  refreshLocalMediaHealth();
+};
 
   const toggleCamera = async () => {
     if (localStream) {

@@ -8,6 +8,7 @@ export interface ParticipantState {
   isMicOn: boolean;
   isCameraOn: boolean;
   isScreenSharing: boolean;
+  isHandRaised: boolean;
 }
 
 export interface LocalMediaHealth {
@@ -496,14 +497,14 @@ export function useMeetingSocket(meetingId: number | null) {
     socket.on("participant-mic-changed", ({ userId, isMicOn }: { userId: number; isMicOn: boolean }) => {
       setParticipantStates((prev) => ({
         ...prev,
-        [userId]: { ...(prev[userId] || { isCameraOn: false, isScreenSharing: false }), isMicOn },
+        [userId]: { ...(prev[userId] || { isCameraOn: false, isScreenSharing: false, isHandRaised: false }), isMicOn },
       }));
     });
 
     socket.on("participant-camera-changed", ({ userId, isCameraOn }: { userId: number; isCameraOn: boolean }) => {
       setParticipantStates((prev) => ({
         ...prev,
-        [userId]: { ...(prev[userId] || { isMicOn: false, isScreenSharing: false }), isCameraOn },
+        [userId]: { ...(prev[userId] || { isMicOn: false, isScreenSharing: false, isHandRaised: false }), isCameraOn },
       }));
     });
 
@@ -512,7 +513,7 @@ export function useMeetingSocket(meetingId: number | null) {
       ({ userId, isScreenSharing }: { userId: number; isScreenSharing: boolean }) => {
         setParticipantStates((prev) => ({
           ...prev,
-          [userId]: { ...(prev[userId] || { isMicOn: false, isCameraOn: false }), isScreenSharing },
+          [userId]: { ...(prev[userId] || { isMicOn: false, isCameraOn: false, isHandRaised: false }), isScreenSharing },
         }));
 
         if (!isScreenSharing) {
@@ -521,6 +522,16 @@ export function useMeetingSocket(meetingId: number | null) {
             return rest;
           });
         }
+      }
+    );
+
+    socket.on(
+      "participant-hand-raised-changed",
+      ({ userId, isHandRaised }: { userId: number; isHandRaised: boolean }) => {
+        setParticipantStates((prev) => ({
+          ...prev,
+          [userId]: { ...(prev[userId] || { isMicOn: false, isCameraOn: false, isScreenSharing: false }), isHandRaised },
+        }));
       }
     );
 
@@ -777,6 +788,11 @@ export function useMeetingSocket(meetingId: number | null) {
     socketRef.current.emit("screen-share", { meetingId: meetingIdRef.current, isScreenSharing });
   }, []);
 
+  const toggleHandRaise = useCallback((isHandRaised: boolean) => {
+    if (!socketRef.current || !meetingIdRef.current) return;
+    socketRef.current.emit("toggle-hand", { meetingId: meetingIdRef.current, isHandRaised });
+  }, []);
+
   const sendChatMessage = useCallback((content: string) => {
     if (!socketRef.current || !meetingIdRef.current) return;
     socketRef.current.emit("meeting-chat", { meetingId: meetingIdRef.current, content });
@@ -802,6 +818,7 @@ export function useMeetingSocket(meetingId: number | null) {
     toggleMic,
     toggleCamera,
     toggleScreenShare,
+    toggleHandRaise,
     sendChatMessage,
   };
 }
