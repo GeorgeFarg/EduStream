@@ -1,20 +1,22 @@
-import multer from 'multer';
-import type { FileFilterCallback } from 'multer';
-import type { Request } from 'express';
-import { config } from '../config/env';
+import multer from "multer";
+import type { FileFilterCallback } from "multer";
+import type { Request } from "express";
+import { config } from "../config/env";
 import {
   generateUniqueFilename,
   validateFileType,
   ALLOWED_MATERIAL_TYPES,
   ALLOWED_SUBMISSION_TYPES,
-} from '../utils/file.util';
+} from "../utils/file.util";
 
 // Configure disk storage for uploaded files
 const storage = multer.diskStorage({
   destination: (req: Request, file: Express.Multer.File, cb) => {
     // Determine destination based on the route
-    const isMaterial = req.path.includes('/materials');
-    const folder = isMaterial ? 'uploads/materials' : 'uploads/submissions';
+    // console.log("req.path", req.baseUrl);
+
+    const isMaterial = req.baseUrl.includes("/materials");
+    const folder = isMaterial ? "uploads/materials" : "uploads/submissions";
     cb(null, folder);
   },
   filename: (req: Request, file: Express.Multer.File, cb) => {
@@ -31,15 +33,15 @@ const storage = multer.diskStorage({
 const materialFileFilter = (
   req: Request,
   file: Express.Multer.File,
-  cb: FileFilterCallback
+  cb: FileFilterCallback,
 ): void => {
   if (validateFileType(file.originalname, ALLOWED_MATERIAL_TYPES)) {
     cb(null, true);
   } else {
     cb(
       new Error(
-        `Invalid file type. Allowed types: ${ALLOWED_MATERIAL_TYPES.join(', ')}`
-      )
+        `Invalid file type. Allowed types: ${ALLOWED_MATERIAL_TYPES.join(", ")}`,
+      ),
     );
   }
 };
@@ -51,15 +53,15 @@ const materialFileFilter = (
 const submissionFileFilter = (
   req: Request,
   file: Express.Multer.File,
-  cb: FileFilterCallback
+  cb: FileFilterCallback,
 ): void => {
   if (validateFileType(file.originalname, ALLOWED_SUBMISSION_TYPES)) {
     cb(null, true);
   } else {
     cb(
       new Error(
-        `Invalid file type. Allowed types: ${ALLOWED_SUBMISSION_TYPES.join(', ')}`
-      )
+        `Invalid file type. Allowed types: ${ALLOWED_SUBMISSION_TYPES.join(", ")}`,
+      ),
     );
   }
 };
@@ -75,6 +77,7 @@ export const uploadMaterial = multer({
   limits: {
     fileSize: config.upload.maxFileSize, // 10MB
   },
+  dest: "material",
 });
 
 /**

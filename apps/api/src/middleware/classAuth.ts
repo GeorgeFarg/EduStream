@@ -1,23 +1,25 @@
-import type { Request, Response, NextFunction } from 'express';
-import { prisma } from '../../lib/prisma';
-import { ClassRole } from '../generated/prisma/client';
-import type { ClassMemeberRequest } from "../types/express"
+import type { Request, Response, NextFunction } from "express";
+import { prisma } from "../../lib/prisma";
+import { ClassRole } from "../generated/prisma/client";
+import type { ClassMemeberRequest } from "../types/express";
 export const isTeacherInClass = async (
   req: ClassMemeberRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const userId = req.user?.id;
     // Check params or body for classId
-    const classId = Number(req.params.classId || req.body.classId);
+    const classId = Number(
+      req.params.classId || req.query.classId || req.body.classId,
+    );
 
     if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: "Unauthorized" });
     }
 
     if (!classId) {
-      return res.status(400).json({ error: 'Class ID is required' });
+      return res.status(400).json({ error: "Class ID is required" });
     }
 
     const membership = await prisma.classMembership.findUnique({
@@ -30,12 +32,12 @@ export const isTeacherInClass = async (
     });
 
     if (!membership || membership.role !== ClassRole.TEACHER) {
-      return res.status(403).json({ error: 'Access denied: Teachers only' });
+      return res.status(403).json({ error: "Access denied: Teachers only" });
     }
 
     req.memperShip = {
-      isTeacher: membership.role == "TEACHER"
-    }
+      isTeacher: membership.role == "TEACHER",
+    };
 
     next();
   } catch (error) {
@@ -46,18 +48,18 @@ export const isTeacherInClass = async (
 export const isMemberOfClass = async (
   req: ClassMemeberRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const userId = (req as any).user?.id;
     const classId = Number(req.query.classId);
 
     if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: "Unauthorized" });
     }
 
     if (!classId) {
-      return res.status(400).json({ error: 'Class ID is required' });
+      return res.status(400).json({ error: "Class ID is required" });
     }
 
     const membership = await prisma.classMembership.findUnique({
@@ -70,12 +72,14 @@ export const isMemberOfClass = async (
     });
 
     if (!membership) {
-      return res.status(403).json({ error: 'Access denied: You are not a member of this class' });
+      return res
+        .status(403)
+        .json({ error: "Access denied: You are not a member of this class" });
     }
 
     req.memperShip = {
-      isTeacher: membership.role == "TEACHER"
-    }
+      isTeacher: membership.role == "TEACHER",
+    };
 
     next();
   } catch (error) {

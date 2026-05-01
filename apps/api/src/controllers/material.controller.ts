@@ -1,12 +1,12 @@
-import type { Response, NextFunction } from 'express';
-import type { AuthRequest } from '../types/express';
-import { createMaterialSchema } from '../validators/material.validator';
+import type { Response, NextFunction } from "express";
+import type { AuthRequest } from "../types/express";
+import { createMaterialSchema } from "../validators/material.validator";
 import {
   createMaterial,
   getAllMaterials,
   getMaterialsByCategory,
-} from '../services/material.service';
-import { ZodError } from 'zod';
+} from "../services/material.service";
+import { ZodError } from "zod";
 
 /**
  * Create a new material
@@ -15,15 +15,17 @@ import { ZodError } from 'zod';
 export const createMaterialController = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     // Check if file was uploaded
+    const classId = Number(req.params.classId);
+
     if (!req.file) {
       res.status(400).json({
         error: {
-          message: 'File is required',
-          code: 'FILE_REQUIRED',
+          message: "File is required",
+          code: "FILE_REQUIRED",
         },
       });
       return;
@@ -44,7 +46,7 @@ export const createMaterialController = async (
       category: validatedData.category,
       fileUrl,
       uploadedBy: teacherId,
-      classId: validatedData.classId,
+      classId: classId,
     });
 
     // Return 201 with created material
@@ -54,10 +56,10 @@ export const createMaterialController = async (
       // Handle validation errors
       res.status(400).json({
         error: {
-          message: 'Validation failed',
-          code: 'VALIDATION_ERROR',
+          message: "Validation failed",
+          code: "VALIDATION_ERROR",
           details: error.issues.reduce((acc: Record<string, string>, err) => {
-            acc[err.path.join('.')] = err.message;
+            acc[err.path.join(".")] = err.message;
             return acc;
           }, {}),
         },
@@ -77,7 +79,7 @@ export const createMaterialController = async (
 export const getAllMaterialsController = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     // Check for category query parameter
@@ -85,7 +87,7 @@ export const getAllMaterialsController = async (
     const classId = Number(req.query.classId);
 
     if (!classId || isNaN(classId)) {
-      res.status(400).json({ error: 'Class ID is required' });
+      res.status(400).json({ error: "Class ID is required" });
       return;
     }
 
