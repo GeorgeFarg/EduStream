@@ -4,8 +4,7 @@ import { apiBaseUrl } from '@/config/env'
 import { signupReturnAction } from '@/types/signup-return';
 import { post } from '@/util/api'
 import { cookies } from 'next/headers';
-import toast from 'react-hot-toast';
-import { success, z } from 'zod'
+import { z } from 'zod'
 
 
 
@@ -65,6 +64,7 @@ export const SignupAction = async (state: any, formData: FormData): Promise<sign
                 name: string;
                 email: string;
             };
+            expiresAt?: string;
         }>(endpoint, {
             name: rawFormData.name,
             email: rawFormData.email,
@@ -83,7 +83,18 @@ export const SignupAction = async (state: any, formData: FormData): Promise<sign
                 }
             }
         } else {
-            (await cookies()).set('session', result.data.token);
+            if (result.data.token) {
+                const expiresAt = result.data.expiresAt
+                    ? new Date(result.data.expiresAt)
+                    : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+                (await cookies()).set('session', result.data.token, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'lax',
+                    expires: expiresAt,
+                    path: '/',
+                });
+            }
 
             return {
                 success: true,

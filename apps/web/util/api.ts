@@ -24,12 +24,14 @@ export async function get<T = any>(
     });
     return { ok: true, data: response.data, error: null };
   } catch (error: any) {
+    const errorData = error?.response?.data;
     const message =
-      error?.response?.data?.message ||
-      error?.response?.data ||
+      errorData?.error?.message ||
+      errorData?.message ||
       error?.message ||
       "An error occurred";
-    return { ok: false, data: null, error: message };
+    const code = errorData?.error?.code || errorData?.code || 500;
+    return { ok: false, data: null, error: { error: { message, code } } };
   }
 }
 
@@ -45,16 +47,18 @@ export async function post<T = any>(
     });
     return { ok: true, data: response.data, error: null };
   } catch (error: any) {
+    const errorData = error?.response?.data;
     const message =
-      error?.response?.data?.message ||
-      error?.response?.data ||
+      errorData?.error?.message ||
+      errorData?.message ||
       error?.message ||
       "An error occurred";
-    return { ok: false, data: null, error: message };
+    const code = errorData?.error?.code || errorData?.code || 500;
+    return { ok: false, data: null, error: { error: { message, code } } };
   }
 }
 
-export async function update<T = any>(
+export async function put<T = any>(
   url: string,
   body: any = {},
   config: AxiosRequestConfig = {},
@@ -66,13 +70,23 @@ export async function update<T = any>(
     });
     return { ok: true, data: response.data, error: null };
   } catch (error: any) {
+    const errorData = error?.response?.data;
     const message =
-      error?.response?.data?.message ||
-      error?.response?.data ||
+      errorData?.error?.message ||
+      errorData?.message ||
       error?.message ||
       "An error occurred";
-    return { ok: false, data: null, error: message };
+    const code = errorData?.error?.code || errorData?.code || 500;
+    return { ok: false, data: null, error: { error: { message, code } } };
   }
+}
+
+export async function update<T = any>(
+  url: string,
+  body: any = {},
+  config: AxiosRequestConfig = {},
+): Promise<ApiResult<T>> {
+  return put<T>(url, body, config);
 }
 
 export async function del<T = any>(
@@ -86,11 +100,13 @@ export async function del<T = any>(
     });
     return { ok: true, data: response.data, error: null };
   } catch (error: any) {
+    const errorData = error?.response?.data;
     const message =
-      error?.response?.data?.message ||
-      error?.response?.data ||
+      errorData?.error?.message ||
+      errorData?.message ||
       error?.message ||
       "An error occurred";
-    return { ok: false, data: null, error: message };
+    const code = errorData?.error?.code || errorData?.code || 500;
+    return { ok: false, data: null, error: { error: { message, code } } };
   }
 }

@@ -6,7 +6,7 @@ import { JoinClassAction } from '@/app/dashboard/action'
 import { JoinClassReturnAction } from '@/types/classroom-return'
 import { useToastAction } from '@/hooks/useToast'
 import toast from 'react-hot-toast'
-import Input from '@/components/ui/Input'
+import Input from '@/components/ui/input'
 
 // ─── Initial state ──────────────────────────────────────────────────────────────
 

@@ -2,19 +2,18 @@
 
 import React, { useActionState, useEffect, useRef, useState } from 'react'
 import Logo from '@/components/ui/Logo'
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
+import { Mail, Lock } from 'lucide-react'
 import Link from 'next/link'
 import { LoginAction } from './action'
 import { loginReturnAction } from '@/types/login-return'
 import { useToastAction } from '@/hooks/useToast'
 import toast from 'react-hot-toast'
-import Input from '@/components/ui/Input'
+import AuthInput from '@/components/ui/AuthInput'
 import PasswordInput from '@/components/ui/PasswordInput'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { gsap } from 'gsap'
 import { useLoginStore } from '@/store'
-import { stat } from 'fs'
 
 const initialState: loginReturnAction = {
     errors: {},
@@ -66,7 +65,7 @@ const LoginPage = () => {
     useEffect(() => {
         let timeoutId: NodeJS.Timeout;
         if (!!state.success) {
-            setLogin(state.data?.data.token!)
+            setLogin('session')
             if (audio.current)
                 audio.current.play();
             setSuccessFullLogin(true);
@@ -146,9 +145,10 @@ const LoginPage = () => {
                             >
                                 Email Address
                             </label>
-                            <Input
+                            <AuthInput
                                 icon={<Mail className="h-5 w-5 text-slate-500 dark:text-slate-400" />}
                                 id='email'
+                                name='email'
                                 placeholder='email'
                                 defaultValue={!state.success ? state.values?.email : ''}
                                 type='text'

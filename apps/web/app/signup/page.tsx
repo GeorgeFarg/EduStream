@@ -2,12 +2,12 @@
 
 import React, { useActionState } from 'react'
 import Logo from '@/components/ui/Logo'
-import { Mail, Lock, Eye, EyeOff, User } from 'lucide-react'
+import { Mail, Lock, User } from 'lucide-react'
 import Link from 'next/link'
 import { SignupAction } from './action'
 import toast from 'react-hot-toast'
 import { signupReturnAction } from '@/types/signup-return'
-import Input from '@/components/ui/Input'
+import AuthInput from '@/components/ui/AuthInput'
 import PasswordInput from '@/components/ui/PasswordInput'
 import { useToastAction } from '@/hooks/useToast'
 
@@ -81,10 +81,11 @@ const SignupPage = () => {
                             >
                                 Full Name
                             </label>
-                            <Input
+                            <AuthInput
                                 defaultValue={state.values?.name}
                                 icon={<User className="h-5 w-5 text-slate-500 dark:text-slate-400" />}
                                 id='name'
+                                name='name'
                                 type='text'
                                 placeholder="John Doe"
                                 isError={!state.success ? !!state.errors?.name : false}
@@ -99,8 +100,9 @@ const SignupPage = () => {
                             >
                                 Email Address
                             </label>
-                            <Input
+                            <AuthInput
                                 id="email"
+                                name="email"
                                 icon={<Mail className="h-5 w-5 text-slate-500 dark:text-slate-400" />}
                                 type="email"
                                 placeholder="you@example.com"

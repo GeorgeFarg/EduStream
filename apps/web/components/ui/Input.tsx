@@ -1,69 +1,21 @@
-"use client"
-import { useState } from 'react'
+import * as React from 'react'
 
+import { cn } from '@/lib/utils'
 
-type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
-    icon?: React.ReactNode;
-    isError?: boolean;
-    id: string;
-    type: string;
-    placeholder: string;
-    defaultValue?: string;
-    maxLength?: number;
-    color?: string;
-    onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-};
-
-const Input = ({
-    icon,
-    isError = false,
-    className,
-    id,
-    type,
-    maxLength,
-    color,
-    onChange,
-    borderColor, // <-- new prop to specify border color
-    ...inputProps
-}: InputProps & { borderColor?: string }) => {
-    const [Length, setLength] = useState(0);
-
+function Input({ className, type, ...props }: React.ComponentProps<'input'>) {
     return (
-        <div className="flex-col">
-            <div className="relative w-full">
-                {!!icon && (
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        {icon}
-                    </div>
-                )}
-                <input
-                    id={id}
-                    name={id}
-                    type={type}
-                    onChange={(e) => {
-                        setLength(e.target.value.length);
-                        !!onChange && onChange(e);
-                    }}
-                    className={
-                        `w-full ${!!icon ? "pl-10" : "px-2"} pr-4 py-3 bg-white/5 border rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all
-                        ${isError
-                            ? "border-red-400 focus:ring-red-500"
-                            : borderColor
-                                ? ""
-                                : "border-white/10 focus:ring-main"
-                        }`
-                    }
-                    {...inputProps}
-                    maxLength={maxLength}
-                    style={{
-                        color,
-                        ...(borderColor && !isError ? { borderColor: borderColor } : {})
-                    }}
-                />
-            </div>
-            {!!maxLength && <span className={`text-dark/40`}>{Length}/{maxLength}</span>}
-        </div>
-    );
+        <input
+            type={type}
+            data-slot="input"
+            className={cn(
+                'file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
+                'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]',
+                'aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive',
+                className,
+            )}
+            {...props}
+        />
+    )
 }
 
 export default Input

@@ -6,6 +6,7 @@ import app from "./app";
 import { redisClient } from "./config/redis";
 import { prisma } from "../lib/prisma";
 import { initializeMeetingSocket } from "./socket/meeting.socket";
+import { initializeClassSocket } from "./socket/class.socket";
 
 dotenv.config();
 
@@ -25,8 +26,9 @@ const io = new Server(server, {
 // Attach io to app so controllers can emit events
 (app as any).io = io;
 
-// Initialize meeting socket handlers
+// Initialize socket handlers
 initializeMeetingSocket(io);
+initializeClassSocket(io);
 
 // Middleware
 app.use(

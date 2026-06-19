@@ -21,6 +21,12 @@ export const createAnnouncementController = async (
             teacherId,
         });
 
+        // Emit socket event for real-time updates
+        const io = (req.app as any).io;
+        if (io) {
+            io.to(`class:${validatedData.classId}`).emit('new-announcement', announcement);
+        }
+
         return res.status(201).json(announcement);
     } catch (error) {
         next(error);

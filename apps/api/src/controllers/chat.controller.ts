@@ -96,6 +96,12 @@ export const createMessageController = async (
       senderId,
     });
 
+    // Emit socket event for real-time updates
+    const io = (req.app as any).io;
+    if (io) {
+      io.to(`class:${classId}`).emit('new-class-message', message);
+    }
+
     return res.status(201).json(message);
   } catch (error) {
     next(error);
