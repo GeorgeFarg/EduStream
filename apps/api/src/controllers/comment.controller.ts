@@ -22,6 +22,15 @@ export const getAnnouncementCommentsController = async (
     const comments = await prisma.comment.findMany({
       where: { announcementId },
       orderBy: { createdAt: 'asc' },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
     });
 
     return res.status(200).json({ comments });
@@ -72,12 +81,21 @@ export const createCommentController = async (
         announcementId,
         userId,
       },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
     });
 
     // Emit socket event for real-time updates
     const io = (req.app as any).io;
     if (io) {
-      io.to(`class:${announcement.classId}`).emit('new-comment', {
+      io.of('/class').to(`class:${announcement.classId}`).emit('new-comment', {
         announcementId,
         comment,
       });

@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { io, Socket } from 'socket.io-client';
 import { Button } from '@/components/ui/button';
 import Input from '@/components/ui/input';
-import { Search, MessageCircle, Loader2, Send } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Search, Loader2, Send } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { apiBaseUrl } from '@/config/env';
 import { useClassContext } from '@/contexts/ClassContext';
@@ -50,7 +50,7 @@ function formatTime(dateStr: string): string {
 }
 
 export default function MessagesPage() {
-  const { currentUser, userId } = useClassContext();
+  const { userId } = useClassContext();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedPartner, setSelectedPartner] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -58,8 +58,22 @@ export default function MessagesPage() {
   const [loadingConvs, setLoadingConvs] = useState(false);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [sending, setSending] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Search variables
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<User[]>([]);
+  const [searching, setSearching] = useState(false);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const socketRef = useRef<Socket | null>(null);
+  const selectedPartnerRef = useRef<User | null>(null);
+
+  // Keep selected partner ref in sync
+  useEffect(() => {
+    selectedPartnerRef.current = selectedPartner;
+  }, [selectedPartner]);
+
+  // Load conversations list
   useEffect(() => {
     if (!userId) return;
     setLoadingConvs(true);
@@ -72,6 +86,7 @@ export default function MessagesPage() {
       .finally(() => setLoadingConvs(false));
   }, [userId]);
 
+  // Load conversation messages
   useEffect(() => {
     if (!selectedPartner) return;
     setLoadingMsgs(true);
@@ -90,6 +105,113 @@ export default function MessagesPage() {
       .catch(() => {})
       .finally(() => setLoadingMsgs(false));
   }, [selectedPartner?.id]);
+
+  // Initialize socket listener for real-time messages
+  useEffect(() => {
+    if (!userId) return;
+
+    const socket = io(`${apiBaseUrl}/private-chat`, {
+      withCredentials: true,
+      transports: ['websocket', 'polling'],
+    });
+
+    socketRef.current = socket;
+
+    socket.on('connect', () => {
+      console.log('Private chat socket connected:', socket.id);
+    });
+
+    socket.on('private-message', (message: Message) => {
+      const partner = selectedPartnerRef.current;
+      // If message belongs to currently open chat
+      if (partner && (message.senderId === partner.id || message.receiverId === partner.id)) {
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === message.id)) return prev;
+          return [...prev, message];
+        });
+        setTimeout(() => {
+          if (scrollRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+          }
+        }, 50);
+      }
+
+      // Update sidebar conversations list
+      setConversations((prev) => {
+        const partnerId = message.senderId === userId ? message.receiverId : message.senderId;
+        const convPartner = message.senderId === userId ? message.receiver : message.sender;
+
+        const idx = prev.findIndex((c) => c.partner.id === partnerId);
+        const updatedConv: Conversation = {
+          partner: convPartner,
+          lastMessage: {
+            id: message.id,
+            content: message.content,
+            createdAt: message.createdAt,
+            sentByMe: message.senderId === userId,
+          },
+        };
+
+        const list = [...prev];
+        if (idx > -1) {
+          list.splice(idx, 1);
+        }
+        return [updatedConv, ...list];
+      });
+    });
+
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, [userId]);
+
+  // Debounced search effect
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setSearching(true);
+    const delayDebounceFn = setTimeout(() => {
+      fetch(`${apiBaseUrl}/api/private-chat/search?q=${encodeURIComponent(searchQuery.trim())}`, {
+        credentials: 'include',
+      })
+        .then((res) => res.json())
+        .then((data: { users: User[] }) => {
+          setSearchResults(data.users || []);
+        })
+        .catch(() => {})
+        .finally(() => setSearching(false));
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
+
+  const handleSelectSearchResult = (partner: User) => {
+    setSelectedPartner(partner);
+    setSearchQuery('');
+    setSearchResults([]);
+
+    // Check if conversation already exists in list, else add a placeholder
+    setConversations((prev) => {
+      const exists = prev.some((c) => c.partner.id === partner.id);
+      if (exists) return prev;
+      return [
+        {
+          partner,
+          lastMessage: {
+            id: 0,
+            content: 'No messages yet',
+            createdAt: new Date().toISOString(),
+            sentByMe: false,
+          },
+        },
+        ...prev,
+      ];
+    });
+  };
 
   const handleSend = async () => {
     if (!selectedPartner || !newMessage.trim()) return;
@@ -126,12 +248,49 @@ export default function MessagesPage() {
           <h2 className="font-semibold mb-3">Messages</h2>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Search..." className="pl-10 bg-input" />
+            <Input
+              placeholder="Search users..."
+              className="pl-10 bg-input"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
         </div>
 
         <ScrollArea className="flex-1">
-          {loadingConvs ? (
+          {searchQuery.trim() !== '' ? (
+            searching ? (
+              <div className="flex items-center gap-2 justify-center py-8 text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin" /> Searching...
+              </div>
+            ) : searchResults.length === 0 ? (
+              <p className="text-center py-8 text-sm text-muted-foreground">
+                No users found
+              </p>
+            ) : (
+              <div className="divide-y divide-border">
+                {searchResults.map((user) => (
+                  <button
+                    key={user.id}
+                    onClick={() => handleSelectSearchResult(user)}
+                    className="w-full p-4 text-left transition hover:bg-muted/50 flex items-center gap-3"
+                  >
+                    <div className="w-10 h-10 rounded-full gradient-accent flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                      {user.name[0]}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-sm truncate">
+                        {user.name}
+                      </h3>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {user.email}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )
+          ) : loadingConvs ? (
             <div className="flex items-center gap-2 justify-center py-8 text-muted-foreground">
               <Loader2 className="w-4 h-4 animate-spin" /> Loading...
             </div>

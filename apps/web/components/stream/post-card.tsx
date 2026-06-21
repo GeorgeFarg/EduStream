@@ -33,6 +33,7 @@ export function PostCard({ post, currentUser, onTogglePin }: PostCardProps) {
   const { comments, commentCount, addComment } = useComments({
     initialComments: post.comments,
     currentUser,
+    postId: post.id,
   });
 
   return (

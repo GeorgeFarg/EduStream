@@ -33,6 +33,7 @@ model User {
   meetingParticipants MeetingParticipant[]
   sentMessages    PrivateMessage[] @relation("SentMessages")
   receivedMessages PrivateMessage[] @relation("ReceivedMessages")
+  comments         Comment[]
   
   @@index([email])
 }
@@ -102,6 +103,7 @@ model Comment {
   
   // Relations
   announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   @@index([announcementId])
 }

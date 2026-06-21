@@ -71,6 +71,12 @@ export const sendMessageController = async (
       receiverId,
     });
 
+    const io = (req.app as any).io;
+    if (io) {
+      io.of('/private-chat').to(`user:${receiverId}`).emit('private-message', message);
+      io.of('/private-chat').to(`user:${senderId}`).emit('private-message', message);
+    }
+
     return res.status(201).json(message);
   } catch (error: any) {
     if (error.name === 'ZodError') {

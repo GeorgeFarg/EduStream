@@ -14,6 +14,14 @@ interface ApiAnnouncement {
   classId: number;
   createdAt: string;
   teacher: { id: number; name: string; email: string };
+  comments?: Array<{
+    id: number;
+    content: string;
+    announcementId: number;
+    userId: number;
+    createdAt: string;
+    user: { id: number; name: string; email: string };
+  }>;
 }
 
 function formatTimestamp(dateStr: string): string {
@@ -63,7 +71,21 @@ export default function StreamPage() {
           isPinned: false,
           likeCount: 0,
           isLiked: false,
-          comments: [],
+          comments: (a.comments ?? []).map((c) => ({
+            id: String(c.id),
+            author: {
+              name: c.user?.name || 'User',
+              avatar: (c.user?.name || 'User')
+                .split(' ')
+                .map((n) => n[0])
+                .join('')
+                .toUpperCase()
+                .slice(0, 2),
+              role: c.userId === a.teacherId ? 'teacher' : 'student',
+            },
+            content: c.content,
+            timestamp: formatTimestamp(c.createdAt),
+          })),
         }));
         setPosts(mapped);
       })

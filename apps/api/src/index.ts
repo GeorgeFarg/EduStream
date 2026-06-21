@@ -7,6 +7,7 @@ import { redisClient } from "./config/redis";
 import { prisma } from "../lib/prisma";
 import { initializeMeetingSocket } from "./socket/meeting.socket";
 import { initializeClassSocket } from "./socket/class.socket";
+import { initializePrivateChatSocket } from "./socket/privateChat.socket";
 
 dotenv.config();
 
@@ -29,6 +30,7 @@ const io = new Server(server, {
 // Initialize socket handlers
 initializeMeetingSocket(io);
 initializeClassSocket(io);
+initializePrivateChatSocket(io);
 
 // Middleware
 app.use(

@@ -12,9 +12,15 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Mail, Bell, Palette, LogOut, Trash2 } from "lucide-react";
+import { Mail, Bell, Palette, LogOut, Trash2, GraduationCap, Copy } from "lucide-react";
+import { useClassContext } from "@/contexts/ClassContext";
+import toast from "react-hot-toast";
 
 export default function SettingsPage() {
+  const { currentClass, isTeacher } = useClassContext();
+
+  const showJoinCode = currentClass && isTeacher(currentClass.id);
+
   return (
     <div className="space-y-6 max-w-2xl">
       {/* Header */}
@@ -24,6 +30,43 @@ export default function SettingsPage() {
           Manage your account and preferences
         </p>
       </div>
+
+      {/* Classroom Settings Section (Teacher Only) */}
+      {showJoinCode && (
+        <div className="bg-card border border-border rounded-lg p-6 space-y-4">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <GraduationCap className="w-5 h-5 text-primary" />
+            Classroom Settings ({currentClass.name})
+          </h2>
+          <Separator />
+          <div className="space-y-4">
+            <div>
+              <Label className="text-muted-foreground text-xs uppercase tracking-wider block mb-1">
+                Classroom Join Code
+              </Label>
+              <div className="flex items-center gap-3 mt-1.5">
+                <span className="font-mono text-2xl font-bold bg-muted px-4 py-2 rounded-md tracking-widest border border-border select-all">
+                  {currentClass.code}
+                </span>
+                <Button
+                  onClick={() => {
+                    navigator.clipboard.writeText(currentClass.code);
+                    toast.success("Join code copied to clipboard!");
+                  }}
+                  variant="outline"
+                  className="gap-2"
+                >
+                  <Copy className="w-4 h-4" />
+                  Copy Code
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Share this 6-character code with students so they can join your classroom.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Profile Section */}
       <div className="bg-card border border-border rounded-lg p-6 space-y-4">
