@@ -1,0 +1,14 @@
+# Use the official Postgres image from the Docker Hub
+FROM postgres
+
+# Set environment variables (override with docker run -e or in docker-compose)
+ENV POSTGRES_USER=user
+ENV POSTGRES_PASSWORD=mysecretpassword
+ENV POSTGRES_DB=edustream_db
+
+# Expose the PostgreSQL port
+EXPOSE 5432
+
+# Optionally, you can copy *.sql scripts to automatically initialize the database:
+# COPY ./init.sql /docker-entrypoint-initdb.d/
+
