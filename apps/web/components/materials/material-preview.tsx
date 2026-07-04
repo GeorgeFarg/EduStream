@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, ExternalLink, FileText } from 'lucide-react';
+import { ArrowLeft, Download, ExternalLink } from 'lucide-react';
 
 import { SendToAIButton } from '@/components/materials/send-to-ai-button';
 import type { MaterialItemData } from '@/components/materials/types';
@@ -154,10 +154,14 @@ export function MaterialPreview({ material, onBack }: MaterialPreviewProps) {
             <p className="mb-2 text-xs text-muted-foreground">ACTIONS</p>
             <div className="flex flex-col gap-2">
               <SendToAIButton material={material} className="w-full justify-center" />
-              <Button variant="outline" className="w-full justify-center gap-2" disabled>
-                <FileText className="h-4 w-4" />
-                Shared in course
-              </Button>
+              {material.attachment?.url && (
+                <Button variant="outline" className="w-full justify-center gap-2" asChild>
+                  <a href={material.attachment.url} target="_blank" rel="noopener noreferrer" download>
+                    <Download className="h-4 w-4" />
+                    Download file
+                  </a>
+                </Button>
+              )}
             </div>
           </div>
         </div>

@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo, useState, type ChangeEvent } from 'react';
+import { useState, type ChangeEvent } from 'react';
+import { FileText, Loader2, X } from 'lucide-react';
 
-import type { MaterialItemData, MaterialType } from '@/components/materials/types';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,58 +15,50 @@ import {
 } from '@/components/ui/dialog';
 import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { ALLOWED_MATERIAL_EXTENSIONS, isAllowedMaterialFile } from '@/lib/materials-api';
+import { formatFileSize } from '@/components/classwork/utils';
 
 interface AddMaterialModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAdd: (material: Omit<MaterialItemData, 'id' | 'uploadedAt'>) => void;
+  onAdd: (payload: { title: string; files: File[] }) => Promise<void>;
+  uploading?: boolean;
 }
 
-export function AddMaterialModal({ open, onOpenChange, onAdd }: AddMaterialModalProps) {
+export function AddMaterialModal({
+  open,
+  onOpenChange,
+  onAdd,
+  uploading = false,
+}: AddMaterialModalProps) {
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [externalLink, setExternalLink] = useState('');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [errors, setErrors] = useState<{
     title?: string;
-    description?: string;
-    source?: string;
+    files?: string;
   }>({});
-
-  const materialType = useMemo<MaterialType>(() => {
-    if (externalLink.trim()) {
-      return 'link';
-    }
-
-    if (!selectedFile) {
-      return 'note';
-    }
-
-    if (
-      selectedFile.type === 'text/plain' ||
-      selectedFile.type === 'text/markdown' ||
-      selectedFile.name.endsWith('.txt') ||
-      selectedFile.name.endsWith('.md') ||
-      selectedFile.name.endsWith('.mk')
-    ) {
-      return 'note';
-    }
-
-    return selectedFile.type === 'application/pdf' ? 'pdf' : 'image';
-  }, [externalLink, selectedFile]);
 
   const resetForm = () => {
     setTitle('');
-    setDescription('');
-    setExternalLink('');
-    setSelectedFile(null);
+    setSelectedFiles([]);
     setErrors({});
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] ?? null;
-    setSelectedFile(file);
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) return;
+
+    setSelectedFiles((current) => {
+      const existingNames = new Set(current.map((file) => file.name));
+      const nextFiles = files.filter((file) => !existingNames.has(file.name));
+      return [...current, ...nextFiles];
+    });
+
+    event.target.value = '';
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setSelectedFiles((current) => current.filter((_, currentIndex) => currentIndex !== index));
   };
 
   const validate = () => {
@@ -73,28 +66,16 @@ export function AddMaterialModal({ open, onOpenChange, onAdd }: AddMaterialModal
 
     if (!title.trim()) {
       nextErrors.title = 'Title is required.';
+    } else if (title.trim().length < 3) {
+      nextErrors.title = 'Title must be at least 3 characters.';
     }
 
-    if (!description.trim()) {
-      nextErrors.description = 'Description is required.';
-    }
-
-    if (!selectedFile && !externalLink.trim()) {
-      nextErrors.source = 'Add a PDF/image file, or provide an external link.';
-    }
-
-    if (selectedFile) {
-      const isValidType =
-        selectedFile.type === 'application/pdf' ||
-        selectedFile.type.startsWith('image/') ||
-        selectedFile.type === 'text/plain' ||
-        selectedFile.type === 'text/markdown' ||
-        selectedFile.name.endsWith('.txt') ||
-        selectedFile.name.endsWith('.md') ||
-        selectedFile.name.endsWith('.mk');
-
-      if (!isValidType) {
-        nextErrors.source = 'Supported files are PDF, image, TXT, MD, and MK.';
+    if (selectedFiles.length === 0) {
+      nextErrors.files = 'Select at least one file to upload.';
+    } else {
+      const invalidFile = selectedFiles.find((file) => !isAllowedMaterialFile(file));
+      if (invalidFile) {
+        nextErrors.files = `"${invalidFile.name}" is not supported. Allowed: PDF, DOCX, PPTX, XLSX, ZIP, JPG, PNG.`;
       }
     }
 
@@ -103,38 +84,26 @@ export function AddMaterialModal({ open, onOpenChange, onAdd }: AddMaterialModal
   };
 
   const handleSubmit = async () => {
-    if (!validate()) {
+    if (!validate() || uploading) {
       return;
     }
 
-    const objectUrl = selectedFile ? URL.createObjectURL(selectedFile) : undefined;
-    const previewText =
-      materialType === 'note' && selectedFile
-        ? await selectedFile.text()
-        : materialType === 'note'
-          ? description.trim()
-          : undefined;
-
-    onAdd({
+    await onAdd({
       title: title.trim(),
-      description: description.trim(),
-      type: materialType,
-      sourceName: selectedFile?.name,
-      externalLink: externalLink.trim() || undefined,
-      attachment: {
-        url: objectUrl,
-        previewText,
-      },
+      files: selectedFiles,
     });
 
     resetForm();
     onOpenChange(false);
   };
 
+  const acceptValue = ALLOWED_MATERIAL_EXTENSIONS.join(',');
+
   return (
     <Dialog
       open={open}
       onOpenChange={(nextOpen) => {
+        if (uploading) return;
         onOpenChange(nextOpen);
 
         if (!nextOpen) {
@@ -145,7 +114,9 @@ export function AddMaterialModal({ open, onOpenChange, onAdd }: AddMaterialModal
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add Material</DialogTitle>
-          <DialogDescription>Upload a resource or share an external link for your class.</DialogDescription>
+          <DialogDescription>
+            Upload one or more files for your class. Students will see all uploaded materials.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -155,53 +126,73 @@ export function AddMaterialModal({ open, onOpenChange, onAdd }: AddMaterialModal
               id="material-title"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
+              placeholder="e.g. Week 1 Lecture Notes"
+              disabled={uploading}
               aria-invalid={Boolean(errors.title)}
             />
             {errors.title && <p className="text-sm text-destructive">{errors.title}</p>}
+            {selectedFiles.length > 1 && (
+              <p className="text-xs text-muted-foreground">
+                Each file will use this title with the file name appended.
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="material-description">Description</Label>
-            <Textarea
-              id="material-description"
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              className="min-h-28"
-              aria-invalid={Boolean(errors.description)}
-            />
-            {errors.description && <p className="text-sm text-destructive">{errors.description}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="material-file">File upload</Label>
+            <Label htmlFor="material-file">Files</Label>
             <Input
               id="material-file"
               type="file"
-              accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.txt,.md,.mk,text/plain,text/markdown"
+              multiple
+              accept={acceptValue}
               onChange={handleFileChange}
+              disabled={uploading}
             />
-            {selectedFile && <p className="text-xs text-muted-foreground">{selectedFile.name}</p>}
-          </div>
+            <p className="text-xs text-muted-foreground">
+              Supported: PDF, DOCX, PPTX, XLSX, ZIP, JPG, PNG. You can select multiple files.
+            </p>
 
-          <div className="space-y-2">
-            <Label htmlFor="material-link">External link</Label>
-            <Input
-              id="material-link"
-              type="url"
-              value={externalLink}
-              onChange={(event) => setExternalLink(event.target.value)}
-              placeholder="https://example.com/resource"
-            />
-          </div>
+            {selectedFiles.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {selectedFiles.map((file, index) => (
+                  <Badge key={`${file.name}-${index}`} variant="secondary" className="gap-2 px-3 py-1">
+                    <FileText className="h-3 w-3" />
+                    <span className="max-w-40 truncate">{file.name}</span>
+                    <span className="text-[10px] text-muted-foreground">{formatFileSize(file.size)}</span>
+                    {!uploading && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFile(index)}
+                        className="hover:text-destructive"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    )}
+                  </Badge>
+                ))}
+              </div>
+            )}
 
-          {errors.source && <p className="text-sm text-destructive">{errors.source}</p>}
+            {errors.files && <p className="text-sm text-destructive">{errors.files}</p>}
+          </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={uploading}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit}>Add Material</Button>
+          <Button onClick={handleSubmit} disabled={uploading || selectedFiles.length === 0}>
+            {uploading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Uploading...
+              </>
+            ) : selectedFiles.length > 1 ? (
+              `Upload ${selectedFiles.length} Materials`
+            ) : (
+              'Upload Material'
+            )}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
