@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 
 import { ClassworkDetails } from "@/components/classwork/classwork-details";
@@ -11,10 +11,16 @@ import type {
   ClassworkItemData,
   ClassworkSubmission,
   ClassworkUserRole,
+  TeacherSubmissionEntry,
 } from "@/components/classwork/types";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { apiBaseUrl } from "@/config/env";
+import {
+  fetchAssignmentSubmissions,
+  gradeSubmissionWork,
+  submitAssignmentWork,
+} from "@/lib/classwork-api";
 import type { Classroom } from "@/types/classroom-return.d";
 
 interface ClassworkShellProps {
@@ -59,7 +65,21 @@ export function ClassworkShell({
   const [submissionsById, setSubmissionsById] = useState<SubmissionRecord>(() =>
     buildSubmissionRecord(initialAssignments),
   );
+  const [teacherSubmissions, setTeacherSubmissions] = useState<
+    TeacherSubmissionEntry[]
+  >([]);
+  const [teacherSubmissionsLoading, setTeacherSubmissionsLoading] =
+    useState(false);
+  const [submittingAssignmentId, setSubmittingAssignmentId] = useState<
+    string | null
+  >(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+  useEffect(() => {
+    setAssignmentsById(buildAssignmentsRecord(initialAssignments));
+    setAssignmentOrder(initialAssignments.map((assignment) => assignment.id));
+    setSubmissionsById(buildSubmissionRecord(initialAssignments));
+  }, [initialAssignments]);
 
   const assignments = useMemo(
     () =>
@@ -75,6 +95,20 @@ export function ClassworkShell({
     ? assignmentsById[selectedAssignmentId]
     : null;
   const canCreateClasswork = userRole === "teacher" || userRole === "admin";
+  const isTeacherView = userRole === "teacher" || userRole === "admin";
+
+  useEffect(() => {
+    if (!selectedAssignmentId || !isTeacherView) {
+      setTeacherSubmissions([]);
+      return;
+    }
+
+    setTeacherSubmissionsLoading(true);
+    fetchAssignmentSubmissions(selectedAssignmentId)
+      .then(setTeacherSubmissions)
+      .catch(() => setTeacherSubmissions([]))
+      .finally(() => setTeacherSubmissionsLoading(false));
+  }, [selectedAssignmentId, isTeacherView]);
 
   const handleSelectAssignment = (assignmentId: string) => {
     setSelectedAssignmentId(assignmentId);
@@ -82,6 +116,7 @@ export function ClassworkShell({
 
   const handleBackToList = () => {
     setSelectedAssignmentId(null);
+    setTeacherSubmissions([]);
   };
 
   const handleCreateAssignment = async (payload: {
@@ -143,58 +178,118 @@ export function ClassworkShell({
     }
   };
 
-  const handleSubmitAssignment = (
+  const handleSubmitAssignment = async (
     assignmentId: string,
-    payload: { text: string; files: File[] },
+    payload: { files: File[] },
   ) => {
-    const nextSubmission: ClassworkSubmission = {
-      text: payload.text,
-      files: payload.files,
-      submittedAt: new Date().toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    };
+    if (payload.files.length === 0) {
+      toast({
+        title: "File required",
+        description: "Please upload a PDF, DOCX, or ZIP file to submit.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    setSubmissionsById((current) => ({
-      ...current,
-      [assignmentId]: nextSubmission,
-    }));
+    const file = payload.files[0];
+    if (!file) return;
 
-    setAssignmentsById((current) => {
-      const assignment = current[assignmentId];
-      if (!assignment) return current;
-      return {
+    setSubmittingAssignmentId(assignmentId);
+
+    try {
+      const result = await submitAssignmentWork(assignmentId, file);
+
+      if (!result.ok) {
+        toast({
+          title: "Submission failed",
+          description: result.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const nextSubmission = result.submission;
+
+      setSubmissionsById((current) => ({
         ...current,
-        [assignmentId]: {
-          ...assignment,
-          status: "submitted" as const,
-          submission: nextSubmission,
-        },
-      };
-    });
+        [assignmentId]: nextSubmission,
+      }));
+
+      setAssignmentsById((current) => {
+        const assignment = current[assignmentId];
+        if (!assignment) return current;
+        return {
+          ...current,
+          [assignmentId]: {
+            ...assignment,
+            status: "submitted" as const,
+            submission: nextSubmission,
+          },
+        };
+      });
+
+      toast({
+        title: "Submission received",
+        description: "Your assignment has been submitted successfully.",
+      });
+    } catch {
+      toast({
+        title: "Error",
+        description: "Network error. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmittingAssignmentId(null);
+    }
+  };
+
+  const handleGradeSubmission = async (submissionId: number, grade: number) => {
+    const result = await gradeSubmissionWork(submissionId, grade);
+
+    if (!result.ok) {
+      toast({
+        title: "Grading failed",
+        description: result.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setTeacherSubmissions((current) =>
+      current.map((submission) =>
+        submission.id === submissionId ? { ...submission, grade } : submission,
+      ),
+    );
 
     toast({
-      title: "Submission received",
-      description: "Your assignment has been marked as submitted.",
+      title: "Grade saved",
+      description: `Submission graded with ${grade}/100.`,
     });
   };
 
-  const assignmentsWithSubmissionState = assignments.map((assignment) => ({
-    ...assignment,
-    submission: submissionsById[assignment.id] ?? assignment.submission,
-  }));
+  const assignmentsWithSubmissionState = assignments.map((assignment) => {
+    const submission = submissionsById[assignment.id] ?? assignment.submission;
+    if (!submission) return assignment;
+
+    const status =
+      assignment.grade !== undefined ? ("graded" as const) : ("submitted" as const);
+
+    return { ...assignment, submission, status };
+  });
 
   const selectedWithSubmissionState = selectedAssignment
-    ? {
-        ...selectedAssignment,
-        submission:
-          submissionsById[selectedAssignment.id] ??
-          selectedAssignment.submission,
-      }
+    ? (() => {
+        const submission =
+          submissionsById[selectedAssignment.id] ?? selectedAssignment.submission;
+        if (!submission) return selectedAssignment;
+
+        const status =
+          selectedAssignment.grade !== undefined
+            ? ("graded" as const)
+            : ("submitted" as const);
+
+        return { ...selectedAssignment, submission, status };
+      })()
     : null;
 
   return (
@@ -229,6 +324,10 @@ export function ClassworkShell({
             onSubmit={(payload) =>
               handleSubmitAssignment(selectedWithSubmissionState.id, payload)
             }
+            submitting={submittingAssignmentId === selectedWithSubmissionState.id}
+            teacherSubmissions={isTeacherView ? teacherSubmissions : undefined}
+            teacherSubmissionsLoading={isTeacherView ? teacherSubmissionsLoading : false}
+            onGrade={isTeacherView ? handleGradeSubmission : undefined}
           />
         ) : (
           <ClassworkList

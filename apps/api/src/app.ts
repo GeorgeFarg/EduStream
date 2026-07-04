@@ -1,6 +1,7 @@
 import express from "express";
 import type { Request, Response } from "express";
 import cors from "cors";
+import path from "path";
 import { errorHandler } from "./middleware/error.middleware";
 
 // Import route modules
@@ -75,6 +76,9 @@ app.use((req: Request, res: Response, next) => {
 
   next();
 });
+
+// Serve uploaded files (assignments, submissions, materials)
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // Health check endpoint
 app.get("/health", (req: Request, res: Response) => {

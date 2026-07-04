@@ -5,12 +5,29 @@ export interface ClassworkAttachment {
   id: string;
   name: string;
   sizeLabel: string;
+  url?: string;
 }
 
 export interface ClassworkSubmission {
-  text: string;
-  files: File[];
+  id?: number;
+  text?: string;
+  fileUrl?: string;
+  fileName?: string;
+  files?: File[];
   submittedAt: string;
+  isLate?: boolean;
+}
+
+export interface TeacherSubmissionEntry {
+  id: number;
+  studentId: number;
+  studentName: string;
+  studentEmail: string;
+  fileUrl: string;
+  fileName: string;
+  submittedAt: string;
+  isLate: boolean;
+  grade: number | null;
 }
 
 export interface ClassworkItemData {

@@ -1,13 +1,16 @@
 "use client";
 
-import { ArrowLeft, FileIcon, Paperclip } from "lucide-react";
+import { ArrowLeft, Download, ExternalLink, FileIcon, Paperclip } from "lucide-react";
 
 import { SubmissionForm } from "@/components/classwork/submission-form";
+import { TeacherSubmissionsPanel } from "@/components/classwork/teacher-submissions-panel";
 import type {
   ClassworkItemData,
   ClassworkUserRole,
+  TeacherSubmissionEntry,
 } from "@/components/classwork/types";
 import { formatDueDate, statusConfig } from "@/components/classwork/utils";
+import { resolveUploadUrl } from "@/lib/classwork-api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -15,7 +18,11 @@ interface ClassworkDetailsProps {
   assignment: ClassworkItemData;
   userRole: ClassworkUserRole;
   onBack: () => void;
-  onSubmit: (payload: { text: string; files: File[] }) => void;
+  onSubmit: (payload: { files: File[] }) => void;
+  submitting?: boolean;
+  teacherSubmissions?: TeacherSubmissionEntry[];
+  teacherSubmissionsLoading?: boolean;
+  onGrade?: (submissionId: number, grade: number) => Promise<void>;
 }
 
 export function ClassworkDetails({
@@ -23,13 +30,18 @@ export function ClassworkDetails({
   userRole,
   onBack,
   onSubmit,
+  submitting = false,
+  teacherSubmissions,
+  teacherSubmissionsLoading = false,
+  onGrade,
 }: ClassworkDetailsProps) {
   const config = statusConfig[assignment.status];
   const StatusIcon = config.icon;
+  const isTeacherView = userRole === "teacher" || userRole === "admin";
   const showSubmissionForm =
     userRole === "student" &&
-    assignment.status !== "graded" &&
-    assignment.status !== "returned";
+    !assignment.submission &&
+    assignment.status !== "graded";
 
   return (
     <div className="space-y-6">
@@ -78,11 +90,26 @@ export function ClassworkDetails({
                       <p className="truncate text-sm font-medium">
                         {attachment.name}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        {attachment.sizeLabel}
-                      </p>
+                      {attachment.sizeLabel && (
+                        <p className="text-xs text-muted-foreground">
+                          {attachment.sizeLabel}
+                        </p>
+                      )}
                     </div>
-                    <Paperclip className="h-4 w-4 text-muted-foreground" />
+                    {attachment.url ? (
+                      <Button variant="outline" size="sm" className="gap-2" asChild>
+                        <a
+                          href={resolveUploadUrl(attachment.url)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Open
+                        </a>
+                      </Button>
+                    ) : (
+                      <Paperclip className="h-4 w-4 text-muted-foreground" />
+                    )}
                   </div>
                 ))}
               </div>
@@ -96,40 +123,58 @@ export function ClassworkDetails({
           {showSubmissionForm && (
             <div className="rounded-lg border border-border bg-card p-6 transition-all duration-200">
               <h2 className="mb-4 text-lg font-semibold">Your Submission</h2>
-              <SubmissionForm assignment={assignment} onSubmit={onSubmit} />
+              <SubmissionForm
+                assignment={assignment}
+                submitting={submitting}
+                onSubmit={onSubmit}
+              />
             </div>
           )}
 
-          {assignment.submission && (
+          {assignment.submission && !isTeacherView && (
             <div className="rounded-lg border border-border bg-card p-6">
               <h2 className="mb-4 text-lg font-semibold">Submitted Work</h2>
               <div className="space-y-3">
-                {assignment.submission.text && (
-                  <p className="rounded-md bg-muted/50 p-4 text-sm leading-relaxed">
-                    {assignment.submission.text}
-                  </p>
+                {assignment.submission.isLate && (
+                  <Badge variant="outline" className="border-red-500/20 bg-red-500/10 text-red-400">
+                    Submitted late
+                  </Badge>
                 )}
-                {assignment.submission.files.length > 0 && (
-                  <div className="space-y-2">
-                    {assignment.submission.files.map((file, index) => (
-                      <div
-                        key={`${file.name}-${index}`}
-                        className="flex items-center gap-3 rounded-md border border-border/60 bg-background/40 p-3"
+                {assignment.submission.fileUrl && (
+                  <div className="flex items-center gap-3 rounded-md border border-border/60 bg-background/40 p-3">
+                    <FileIcon className="h-5 w-5 text-primary" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">
+                        {assignment.submission.fileName ?? "Submitted file"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Submitted for: {assignment.title}
+                      </p>
+                    </div>
+                    <Button variant="outline" size="sm" className="gap-2" asChild>
+                      <a
+                        href={resolveUploadUrl(assignment.submission.fileUrl)}
+                        target="_blank"
+                        rel="noopener noreferrer"
                       >
-                        <FileIcon className="h-5 w-5 text-primary" />
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">
-                            {file.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {file.type || "Uploaded file"}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+                        <Download className="h-4 w-4" />
+                        Download
+                      </a>
+                    </Button>
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {isTeacherView && onGrade && (
+            <div className="rounded-lg border border-border bg-card p-6">
+              <h2 className="mb-4 text-lg font-semibold">Student Submissions</h2>
+              <TeacherSubmissionsPanel
+                submissions={teacherSubmissions ?? []}
+                loading={teacherSubmissionsLoading}
+                onGrade={onGrade}
+              />
             </div>
           )}
         </div>
@@ -169,12 +214,19 @@ export function ClassworkDetails({
             </div>
           )}
 
-          {assignment.submission && (
+          {assignment.submission && !isTeacherView && (
             <div className="rounded-lg border border-border bg-card p-4">
               <p className="mb-1 text-xs text-muted-foreground">SUBMITTED</p>
               <p className="text-sm font-medium">
                 {assignment.submission.submittedAt}
               </p>
+            </div>
+          )}
+
+          {isTeacherView && teacherSubmissions && (
+            <div className="rounded-lg border border-border bg-card p-4">
+              <p className="mb-1 text-xs text-muted-foreground">SUBMISSIONS</p>
+              <p className="text-lg font-semibold">{teacherSubmissions.length}</p>
             </div>
           )}
         </div>

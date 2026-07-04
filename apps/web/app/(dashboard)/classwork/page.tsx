@@ -4,18 +4,13 @@ import { useEffect, useState } from 'react';
 import { ClassworkShell } from '@/components/classwork/classwork-shell';
 import type { ClassworkItemData, ClassworkUserRole } from '@/components/classwork/types';
 import { useClassContext } from '@/contexts/ClassContext';
-import { apiBaseUrl } from '@/config/env';
+import {
+  fetchClassAssignments,
+  fetchMySubmissions,
+  mapApiAssignmentToClassworkItem,
+  type ApiStudentSubmission,
+} from '@/lib/classwork-api';
 import { Loader2 } from 'lucide-react';
-
-interface ApiAssignment {
-  id: number;
-  title: string;
-  description: string;
-  dueDate: string;
-  classId: number;
-  fileUrl: string | null;
-  teacher: { id: number; name: string; email: string };
-}
 
 export default function ClassworkPage() {
   const { currentClass, userId, isTeacher, loading } = useClassContext();
@@ -25,30 +20,48 @@ export default function ClassworkPage() {
 
   useEffect(() => {
     if (!currentClass || !userId) return;
-    setUserRole(isTeacher(currentClass.id) ? 'teacher' : 'student');
+
+    const teacher = isTeacher(currentClass.id);
+    setUserRole(teacher ? 'teacher' : 'student');
     setFetchLoading(true);
 
-    fetch(`${apiBaseUrl}/api/assignments?classId=${currentClass.id}`, {
-      credentials: 'include',
-    })
-      .then((res) => res.json())
-      .then((data: ApiAssignment[]) => {
-        const now = new Date();
-        const mapped: ClassworkItemData[] = (Array.isArray(data) ? data : []).map((a) => ({
-          id: String(a.id),
-          title: a.title,
-          description: a.description,
-          dueDate: a.dueDate,
-          status: new Date(a.dueDate) < now ? 'missing' : 'assigned',
-          points: 100,
-          attachments: a.fileUrl
-            ? [{ id: `${a.id}-file`, name: 'Attachment', sizeLabel: '' }]
-            : [],
-        }));
+    const loadClasswork = async () => {
+      try {
+        const apiAssignments = await fetchClassAssignments(currentClass.id);
+
+        if (teacher) {
+          const mapped = apiAssignments.map((assignment) =>
+            mapApiAssignmentToClassworkItem(assignment),
+          );
+          setAssignments(mapped);
+          return;
+        }
+
+        const mySubmissions = await fetchMySubmissions();
+        const submissionsByAssignmentId = mySubmissions.reduce<
+          Record<number, ApiStudentSubmission>
+        >((record, submission) => {
+          if (submission.assignment.id) {
+            record[submission.assignmentId] = submission;
+          }
+          return record;
+        }, {});
+
+        const mapped = apiAssignments.map((assignment) =>
+          mapApiAssignmentToClassworkItem(
+            assignment,
+            submissionsByAssignmentId[assignment.id] ?? null,
+          ),
+        );
         setAssignments(mapped);
-      })
-      .catch(() => {})
-      .finally(() => setFetchLoading(false));
+      } catch {
+        setAssignments([]);
+      } finally {
+        setFetchLoading(false);
+      }
+    };
+
+    void loadClasswork();
   }, [currentClass?.id, userId]);
 
   if (loading || !currentClass) {
