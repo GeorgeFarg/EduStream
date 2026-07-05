@@ -40,7 +40,9 @@ app.use(
   }),
 );
 
-redisClient.connect().then(() => console.log('Redis is connected successfully 🚀'));
+redisClient
+  .connect()
+  .then(() => console.log("Redis is connected successfully 🚀"));
 checkSQLConnection();
 
 // Start server

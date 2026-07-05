@@ -1,4 +1,5 @@
-import { prisma } from '../../lib/prisma';
+import { prisma } from "../../lib/prisma";
+import { ingestMaterialToRag } from "./rag.service";
 
 export interface CreateMaterialDTO {
   title: string;
@@ -25,7 +26,7 @@ export interface MaterialResponse {
  * @returns Promise resolving to created material with uploader name
  */
 export const createMaterial = async (
-  data: CreateMaterialDTO
+  data: CreateMaterialDTO,
 ): Promise<MaterialResponse> => {
   const material = await prisma.material.create({
     data: {
@@ -44,7 +45,7 @@ export const createMaterial = async (
     },
   });
 
-  return {
+  const response = {
     id: material.id,
     title: material.title,
     fileUrl: material.fileUrl,
@@ -54,6 +55,20 @@ export const createMaterial = async (
     createdAt: material.createdAt,
     updatedAt: material.updatedAt,
   };
+
+  const materialFilePath = material.fileUrl.replace(/^\//, "");
+  await ingestMaterialToRag({
+    materialId: material.id,
+    classId: material.classId,
+    title: material.title,
+    uploadedBy: material.uploadedBy,
+    filePath: materialFilePath,
+    fileName: material.fileUrl.split("/").pop() ?? material.title,
+  }).catch((error: unknown) => {
+    console.error("Failed to ingest material into RAG index:", error);
+  });
+
+  return response;
 };
 
 /**
@@ -61,7 +76,9 @@ export const createMaterial = async (
  * @param classId - Class ID
  * @returns Promise resolving to array of materials
  */
-export const getAllMaterials = async (classId: number): Promise<MaterialResponse[]> => {
+export const getAllMaterials = async (
+  classId: number,
+): Promise<MaterialResponse[]> => {
   const materials = await prisma.material.findMany({
     where: {
       classId,
@@ -74,7 +91,7 @@ export const getAllMaterials = async (classId: number): Promise<MaterialResponse
       },
     },
     orderBy: {
-      createdAt: 'desc',
+      createdAt: "desc",
     },
   });
 
@@ -98,7 +115,7 @@ export const getAllMaterials = async (classId: number): Promise<MaterialResponse
  */
 export const getMaterialsByCategory = async (
   classId: number,
-  category: string
+  category: string,
 ): Promise<MaterialResponse[]> => {
   const materials = await prisma.material.findMany({
     where: {
@@ -113,7 +130,7 @@ export const getMaterialsByCategory = async (
       },
     },
     orderBy: {
-      createdAt: 'desc',
+      createdAt: "desc",
     },
   });
 
