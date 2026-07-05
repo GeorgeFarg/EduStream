@@ -11,7 +11,7 @@ import toast from 'react-hot-toast'
 import AuthInput from '@/components/ui/AuthInput'
 import PasswordInput from '@/components/ui/PasswordInput'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { gsap } from 'gsap'
 import { useLoginStore } from '@/store'
 
@@ -35,6 +35,9 @@ const LoginPage = () => {
     const audio = useRef<HTMLAudioElement | null>(null)
 
     const router = useRouter()
+    const searchParams = useSearchParams()
+    const nextPath = searchParams.get('next')
+    const redirectTo = nextPath?.startsWith('/') && !nextPath.startsWith('//') ? nextPath : '/'
 
     // Add a ref for the success image
     const imageRef = useRef<HTMLImageElement | null>(null);
@@ -104,7 +107,7 @@ const LoginPage = () => {
 
             // Delay for 5 seconds before routing
             timeoutId = setTimeout(() => {
-                router.push('/')
+                router.push(redirectTo)
             }, 7000);
         }
         return () => {
@@ -113,7 +116,7 @@ const LoginPage = () => {
 
             if (timeoutId) clearTimeout(timeoutId);
         };
-    }, [state.success, setLogin]);
+    }, [state.success, setLogin, router, redirectTo]);
 
     return (
         <div className="min-h-screen gradient-bg dark:bg-dark bg-slate-50 flex flex-col items-center justify-center px-4 py-8 relative">

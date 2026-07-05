@@ -10,6 +10,12 @@ import {
 
 import { Classroom } from '@/types/classroom-return'
 import { useRouter } from 'next/navigation'
+import { BookOpen, Trash2 } from 'lucide-react'
+import EditClassModal from './EditClassModal'
+import DeleteClassConfirmModal from './DeleteClassConfirmModal'
+
+
+
 
 // ─── Card gradient palette ──────────────────────────────────────────────────────
 // Each card gets a gradient based on its position index, just like the design.
@@ -47,15 +53,39 @@ const ClassroomCard = ({ classroom, index, userId }: Props) => {
     const gradient = gradients[index % gradients.length]
     const badgeColor: string = badgeColors[index % badgeColors.length] ?? ''
     const router = useRouter()
+    const classHref = `/stream?classId=${classroom.id}`
+
+    const [editOpen, setEditOpen] = React.useState(false)
+    const [deleteOpen, setDeleteOpen] = React.useState(false)
+
+    const closeEdit = () => setEditOpen(false)
+    const closeDelete = () => setDeleteOpen(false)
+
+    // dashboard client passes refreshClassrooms via callback? If not available, we refresh by reloading the page.
+    // NOTE: We'll keep it simple for now.
+    // IMPORTANT: keep this from changing the URL while the modal is open.
+    // Reloading via location.reload() may still trigger Next route re-evaluation.
+    // Instead, simply close modals; the parent list should refresh naturally.
+    const onOperationSuccess = () => {
+        if (typeof window !== 'undefined') {
+            window.location.reload();
+        }
+    }
+
+
+
 
     return (
         <div
+
             onClick={(e) => {
+                if (editOpen || deleteOpen) return;
                 e.stopPropagation();
-                router.push(`/studio?classId=${classroom.id}`);
+                router.push(classHref);
             }}
 
-            className="bg-[#1a1a2e] rounded-2xl overflow-hidden border border-white/10 shadow-sm hover:shadow-md transition-shadow duration-200"
+
+            className="bg-[#1a1a2e] rounded-2xl overflow-hidden border border-white/10 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
         >
 
             {/* Coloured header strip */}
@@ -88,25 +118,66 @@ const ClassroomCard = ({ classroom, index, userId }: Props) => {
                             <DropdownMenuItem
                                 className="focus:bg-white/10 focus:text-white"
                                 onSelect={() => {
-                                    router.push(`class/${classroom.id}`)
-                                }}
-                            >
-                                <ExternalLink className="h-4 w-4" />
-                                Open class
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                className="focus:bg-white/10 focus:text-white"
-                                onSelect={() => {
                                     void navigator.clipboard.writeText(classroom.code)
                                 }}
                             >
                                 <Copy className="h-4 w-4" />
                                 Copy class code
                             </DropdownMenuItem>
+                    <DropdownMenuItem
+                                className="focus:bg-white/10 focus:text-white"
+                                onSelect={() => {
+                                    router.push(classHref)
+                                }}
+                            >
+                                <ExternalLink className="h-4 w-4" />
+                                Open class
+                            </DropdownMenuItem>
+
+                            {userId === classroom.ownerId && (
+                              <>
+
+                                <DropdownMenuItem
+                                  className="focus:bg-white/10 focus:text-white"
+                                  onSelect={() => {
+                                    setEditOpen(true)
+                                  }}
+                                >
+                                  <BookOpen className="h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                              </>
+
+                            )}
+
+
+                                <DropdownMenuItem
+                                  className="focus:bg-white/10 focus:text-white"
+                                  onSelect={() => {
+                                    setDeleteOpen(true)
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-400" />
+                                  Delete class
+                                </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
             </div>
+
+            <EditClassModal
+              open={editOpen}
+              onClose={closeEdit}
+              onSuccess={onOperationSuccess}
+              classId={classroom.id}
+            />
+            <DeleteClassConfirmModal
+              open={deleteOpen}
+              onClose={closeDelete}
+              onSuccess={onOperationSuccess}
+              classId={classroom.id}
+            />
+
 
             {/* Card body */}
             <div className="px-5 py-4">
@@ -132,7 +203,7 @@ const ClassroomCard = ({ classroom, index, userId }: Props) => {
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
-                            router.push(`/studio?classId=${classroom.id}`);
+                            router.push(classHref);
                         }}
                         className="text-main text-sm font-semibold hover:text-main/80 transition-colors"
                     >

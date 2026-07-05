@@ -42,13 +42,21 @@ export default function StreamPage() {
   const classIdParam = searchParams.get('classId');
   const { currentClass, currentUser, userId, isTeacher, loading, setCurrentClass, classes } = useClassContext();
 
+  // Prevent continuous re-renders:
+  // only setCurrentClass when it's actually different from currentClass.
   useEffect(() => {
     if (!classIdParam) return;
     const parsed = Number(classIdParam);
     if (Number.isNaN(parsed)) return;
+
     const found = classes.find((c) => c.id === parsed);
-    if (found) setCurrentClass(found);
-  }, [classIdParam, classes, setCurrentClass]);
+    if (!found) return;
+
+    if (currentClass?.id !== found.id) {
+      setCurrentClass(found);
+    }
+  }, [classIdParam, classes, setCurrentClass, currentClass?.id]);
+
 
 
 

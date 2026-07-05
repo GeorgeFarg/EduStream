@@ -1,10 +1,19 @@
-# TODO - UI Theme Consistency (EduStream)
+# TODO
 
-- [x] توحيد ألوان الـ Sidebar الأساسي المستخدم في الـ dashboard: تعديل `apps/web/components/layout/sidebar.tsx` لتستعمل tokens shadcn (`bg-sidebar`, `text-sidebar-foreground`, `border-sidebar-border`, `bg-primary`, ...)
-- [x] توحيد ألوان Sidebar البديل/القديم: تعديل `apps/web/components/ClasssideBar.tsx` لنفس المنظومة اللونية
-- [x] تعديل صفحة Stream داخل الـ dashboard لتناسق layout: مراجعة `apps/web/app/(dashboard)/stream/page.tsx` وتوحيد الكونتنت
 
-- [x] عمل search سريع بعد التعديل للتأكد من عدم بقاء ألوان ثابتة قديمة داخل الـ dashboard (مثل `bg-dark`, `bg-main/10` بشكل غير متسق)
-- [ ] تشغيل `lint` و `build` للتأكد من عدم وجود أخطاء
+## Frontend: Dashboard class management
+- [ ] Add Edit/Delete UI inside each `ClassroomCard` dropdown.
+- [ ] Create `EditClassModal` component (name + description) and wire it.
+- [ ] Add delete confirmation (dialog/modal) and wire it.
+- [ ] Call backend endpoints and refresh classrooms list on success.
+
+## Backend: API endpoints
+- [ ] Add controller `updateClass` (name + description) with owner-only authorization.
+- [ ] Add controller `deleteClass` with owner-only authorization.
+- [ ] Add routes: `PATCH /api/classes/:id` and `DELETE /api/classes/:id`.
+
+
+## Verify
+- [ ] Run frontend/backend tests/build and manual smoke test: edit & delete.
 
 

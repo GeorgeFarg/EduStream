@@ -216,7 +216,6 @@ export const searchClassUsers = async (
   }
 };
 
-
 export const addUserToClass = async (
   req: Request,
   res: Response,
@@ -280,4 +279,169 @@ export const addUserToClass = async (
     next(error);
   }
 };
+
+export const getClassById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const classId = Number(req.params.classId);
+    if (!classId || Number.isNaN(classId)) {
+      return res.status(400).json({ error: { message: "Class ID is required" } });
+    }
+
+    const klass = await prisma.class.findUnique({
+      where: { id: classId },
+      select: { id: true, name: true, description: true, code: true, ownerId: true },
+    });
+
+    if (!klass) {
+      return res.status(404).json({ error: { message: "Class not found" } });
+    }
+
+    return res.status(200).json({ class: klass });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateClass = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const classId = Number(req.params.classId);
+    const { name, description } = req.body as {
+      name?: string;
+      description?: string;
+    };
+
+    // Ensure teacher/owner can update by requiring membership
+    const userId = (req as any).user?.id as number | undefined;
+    if (!userId) {
+      return res.status(401).json({ error: { message: "Unauthorized" } });
+    }
+
+    const membership = await prisma.classMembership.findUnique({
+      where: {
+        userId_classId: {
+          userId,
+          classId,
+        },
+      },
+    });
+
+    if (!membership || membership.role !== ClassRole.TEACHER) {
+      return res.status(403).json({ error: { message: "Access denied" } });
+    }
+
+    if (!classId || Number.isNaN(classId)) {
+      return res.status(400).json({ error: { message: "Class ID is required" } });
+    }
+
+    const trimmedName = typeof name === "string" ? name.trim() : "";
+    const trimmedDescription = typeof description === "string" ? description.trim() : "";
+
+    if (!trimmedName) {
+      return res.status(400).json({ error: { message: "Class name is required" } });
+    }
+
+    const updated = await prisma.class.update({
+      where: { id: classId },
+      data: {
+        name: trimmedName,
+        description: trimmedDescription,
+      },
+      select: { id: true, name: true, description: true, code: true, ownerId: true },
+    });
+
+    return res.status(200).json({ class: updated });
+  } catch (error: any) {
+    if (error?.code === "P2025") {
+      return res.status(404).json({ error: { message: "Class not found" } });
+    }
+    next(error);
+  }
+};
+
+export const deleteClass = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const classId = Number(req.params.classId);
+    const userId = (req as any).user?.id as number | undefined;
+
+    if (!classId || Number.isNaN(classId)) {
+      return res.status(400).json({ error: { message: "Class ID is required" } });
+    }
+
+    if (!userId) {
+      return res.status(401).json({ error: { message: "Unauthorized" } });
+    }
+
+    // Allow only TEACHER in this class (owner is also expected to be TEACHER)
+    const membership = await prisma.classMembership.findUnique({
+      where: {
+        userId_classId: { userId, classId },
+      },
+    });
+
+    if (!membership || membership.role !== ClassRole.TEACHER) {
+      return res.status(403).json({ error: { message: "Access denied" } });
+    }
+
+    await prisma.class.delete({ where: { id: classId } });
+
+    return res.status(200).json({ message: "Class deleted successfully" });
+  } catch (error: any) {
+    if (error?.code === "P2025") {
+      return res.status(404).json({ error: { message: "Class not found" } });
+    }
+    next(error);
+  }
+};
+
+export const deleteClassMembershipLeave = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const classId = Number(req.params.classId);
+    const userId = (req as any).user?.id as number | undefined;
+
+    if (!classId || Number.isNaN(classId)) {
+      return res.status(400).json({ error: { message: "Class ID is required" } });
+    }
+
+    if (!userId) {
+      return res.status(401).json({ error: { message: "Unauthorized" } });
+    }
+
+    const membership = await prisma.classMembership.findUnique({
+      where: { userId_classId: { userId, classId } },
+    });
+
+    if (!membership) {
+      return res.status(403).json({ error: { message: "Not a member of this class" } });
+    }
+
+    await prisma.classMembership.delete({
+      where: { userId_classId: { userId, classId } },
+    });
+
+    return res.status(200).json({ message: "Left class successfully" });
+  } catch (error: any) {
+    if (error?.code === "P2025") {
+      return res.status(404).json({ error: { message: "Membership not found" } });
+    }
+    next(error);
+  }
+};
+
+
 

@@ -95,12 +95,13 @@ const JoinClassModal = ({ isOpen, onClose, onSuccess }: Props) => {
                             Class Code <span className="text-red-500">*</span>
                         </label>
                         <Input
-                            icon={<Hash className="h-5 w-5 text-slate-500 dark:text-slate-400" />}
                             id="code"
+                            name="code"
                             type="text"
                             placeholder="e.g. ABC123"
                             defaultValue={!state.success ? state.values?.code : ''}
-                            isError={!state.success ? !!state.errors?.code : false}
+                            aria-invalid={!state.success ? !!state.errors?.code : false}
+                            className="uppercase tracking-widest"
                         />
                         {!state.success && state.errors?.code && (
                             <p className="mt-1 text-xs text-red-500">{state.errors.code[0]}</p>

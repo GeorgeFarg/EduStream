@@ -7,11 +7,9 @@ import { Sidebar } from "./sidebar";
 export function MobileSidebar({
   open,
   onOpenChange,
-  isCollapsed,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  isCollapsed: boolean;
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -23,7 +21,7 @@ export function MobileSidebar({
         {/* Reuse the same sidebar content but hide desktop wrapper is handled by md classes */}
         <div className="h-full">
           {/* We force isCollapsed=false inside sheet so labels show */}
-          <Sidebar isCollapsed={false} />
+          <Sidebar isCollapsed={false} isMobile />
         </div>
       </SheetContent>
     </Sheet>

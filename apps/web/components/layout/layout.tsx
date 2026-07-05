@@ -13,8 +13,6 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const handleToggleSidebar = () => {
@@ -28,7 +26,6 @@ export function Layout({ children }: LayoutProps) {
       <MobileSidebar
         open={isMobileSidebarOpen}
         onOpenChange={setIsMobileSidebarOpen}
-        isCollapsed={isSidebarCollapsed}
       />
 
 
@@ -38,7 +35,7 @@ export function Layout({ children }: LayoutProps) {
         <Navbar 
           isCollapsed={isSidebarCollapsed} 
           onToggleSidebar={handleToggleSidebar}
-          onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          onMobileMenuToggle={() => setIsMobileSidebarOpen(true)}
         />
 
         {/* Page Content */}

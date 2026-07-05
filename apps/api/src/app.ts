@@ -11,10 +11,10 @@ import assignmentRoutes from "./routes/assignment.routes";
 import submissionRoutes from "./routes/submission.routes";
 import classRoutes from "./routes/class.routes";
 import classUsersRoutes from "./routes/class.users.routes";
-
-
+import usersRoutes from "./routes/users.routes";
 
 import chatRoutes from "./routes/chat.routes";
+
 import privateChatRoutes from "./routes/privateChat.routes";
 import meetingRoutes from "./routes/meeting.routes";
 import { authenticate } from "./middleware/auth.middleware";
@@ -95,6 +95,8 @@ app.use("/api/auth", authRoutes);
 app.use(authenticate);
 app.use("/api/classes", classRoutes);
 app.use("/api/classes", classUsersRoutes);
+app.use("/api/users", usersRoutes);
+
 app.use("/api/classes/:classId/chat", chatRoutes);
 
 app.use("/api/classes/:classId/meetings", meetingRoutes);

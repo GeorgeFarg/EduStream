@@ -1,14 +1,17 @@
-'use client'
 import Hero from "@/components/sections/hero";
 import Features from "@/components/sections/features";
 import { Testimonials } from "@/components/sections/Testimonials";
 import Footer from "@/components/sections/footer";
 import NavBar from "@/components/NavBar";
+import { cookies } from "next/headers";
 
-export default function Home() {
+export default async function Home() {
+  const cookieStore = await cookies();
+  const isLoggedIn = cookieStore.has("session");
+
   return (
     <>
-      <NavBar />
+      <NavBar initialIsLoggedIn={isLoggedIn} />
       <Hero />
       <Features />
       <Testimonials />

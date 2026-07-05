@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import {
   Home,
@@ -48,8 +48,9 @@ const navItems: NavItem[] = [
   { name: "Settings", href: "/settings", icon: <Settings className="w-5 h-5" /> },
 ];
 
-export function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
+export function Sidebar({ isCollapsed, isMobile = false }: { isCollapsed: boolean; isMobile?: boolean }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { classes, currentClass, setCurrentClass, refreshClasses, loading } = useClassContext();
   const [isClassModalOpen, setIsClassModalOpen] = useState(false);
   const { contextSafe } = useGSAP();
@@ -77,11 +78,19 @@ export function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
     );
   });
 
+  const handleSelectClass = (cls: (typeof classes)[number]) => {
+    setCurrentClass(cls);
+    if (pathname === "/stream") {
+      router.push(`/stream?classId=${cls.id}`);
+    }
+  };
+
   return (
     <>
       <nav
         className={cn(
           "hidden md:flex flex-col h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300 overflow-y-auto scrollbar-hidden",
+          isMobile ? "flex" : "hidden md:flex",
           isCollapsed ? "w-20" : "w-64",
         )}
       >
@@ -151,7 +160,7 @@ export function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
                   {classes.map((cls) => (
                     <DropdownMenuItem
                       key={cls.id}
-                      onClick={() => setCurrentClass(cls)}
+                      onClick={() => handleSelectClass(cls)}
                       className={currentClass?.id === cls.id ? "bg-primary/15" : ""}
                     >
 

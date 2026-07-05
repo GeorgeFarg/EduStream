@@ -53,7 +53,7 @@ const CreateClassModal = ({ isOpen, onClose, onSuccess }: Props) => {
             onSuccess()
         }
 
-    }, [state])
+    }, [state, onSuccess])
 
     // Close modal on Escape key
     useEffect(() => {
@@ -103,12 +103,13 @@ const CreateClassModal = ({ isOpen, onClose, onSuccess }: Props) => {
                             Class Name <span className="text-red-500">*</span>
                         </label>
                         <Input
-                            icon={<BookOpen className="h-5 w-5 text-slate-400" />}
                             id="name"
+                            name="name"
                             type="text"
                             placeholder="e.g. Advanced Mathematics"
                             defaultValue={!state.success ? state.values?.name : ''}
-                            isError={!state.success ? !!state.errors?.name : false}
+                            aria-invalid={!state.success ? !!state.errors?.name : false}
+                            className="bg-white/5 border-white/10 text-white placeholder:text-slate-400"
                         />
                         {!state.success && state.errors?.name && (
                             <p className="mt-1 text-xs text-red-500">{state.errors.name[0]}</p>
