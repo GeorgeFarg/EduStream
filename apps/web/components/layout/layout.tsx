@@ -25,8 +25,8 @@ export function Layout({ children }: LayoutProps) {
       {/* Main Content */}
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Top Navbar */}
-        <Navbar 
-          isCollapsed={isSidebarCollapsed} 
+        <Navbar
+          isCollapsed={isSidebarCollapsed}
           onToggleSidebar={handleToggleSidebar}
           onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         />

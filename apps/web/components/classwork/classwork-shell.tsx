@@ -279,17 +279,17 @@ export function ClassworkShell({
 
   const selectedWithSubmissionState = selectedAssignment
     ? (() => {
-        const submission =
-          submissionsById[selectedAssignment.id] ?? selectedAssignment.submission;
-        if (!submission) return selectedAssignment;
+      const submission =
+        submissionsById[selectedAssignment.id] ?? selectedAssignment.submission;
+      if (!submission) return selectedAssignment;
 
-        const status =
-          selectedAssignment.grade !== undefined
-            ? ("graded" as const)
-            : ("submitted" as const);
+      const status =
+        selectedAssignment.grade !== undefined
+          ? ("graded" as const)
+          : ("submitted" as const);
 
-        return { ...selectedAssignment, submission, status };
-      })()
+      return { ...selectedAssignment, submission, status };
+    })()
     : null;
 
   return (

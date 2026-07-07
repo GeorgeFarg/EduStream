@@ -89,7 +89,7 @@ export default function StreamPage() {
         }));
         setPosts(mapped);
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setFetchLoading(false));
   }, [currentClass?.id]);
 
@@ -97,11 +97,11 @@ export default function StreamPage() {
     name: currentUser?.name ?? 'You',
     avatar: currentUser?.name
       ? currentUser.name
-          .split(' ')
-          .map((n) => n[0])
-          .join('')
-          .toUpperCase()
-          .slice(0, 2)
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
       : 'ME',
     role: currentClass && userId ? (isTeacher(currentClass.id) ? 'teacher' : 'student') : 'student',
   };

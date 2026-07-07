@@ -25,11 +25,11 @@ export function Navbar({ isCollapsed, onToggleSidebar, onMobileMenuToggle }: Nav
 
   const initials = currentUser?.name
     ? currentUser.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2)
     : "?";
 
   return (

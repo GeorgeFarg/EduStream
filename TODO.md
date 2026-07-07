@@ -1,15 +1,16 @@
 # WebRTC Meeting Fix TODO
 
 ## Issues
+
 1. **Duplicate disconnect handlers** — peer connections cleaned up in multiple places
 2. **Missing renegotiation WebRTC** — `onnegotiationneeded` nulled, only one side initiates, no renegotiation on track replace
 3. **Media state = UI only** — server doesn't track states, new joiners get defaults
 
 ## Steps
+
 - [x] Analyze code and identify root causes
 - [x] Get user approval for fix plan
 - [ ] Edit `apps/api/src/socket/meeting.socket.ts` — Add server-side media state tracking
 - [ ] Edit `apps/web/hooks/useMeetingSocket.ts` — Fix cleanup, renegotiation, and state sync
 - [ ] Edit `apps/web/components/class/ClassMeeting.tsx` — Minor cleanup improvements
 - [ ] Test and verify
-

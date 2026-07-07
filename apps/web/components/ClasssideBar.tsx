@@ -5,28 +5,29 @@ import { Home, Calendar, CheckSquare, GraduationCap, ChevronDown, MessageSquare 
 
 const StreamSideBar = () => {
   const pathname = usePathname();
-  
+
   const basicLinks = [
-    { key: 'home', label: 'HOME', href: '/', icon: <Home size={18} /> },
+    { key: 'home', label: 'HOME', href: '/class/1', icon: <Home size={18} /> },
     {
       key: 'chat',
       label: 'CHAT',
-      href: '/private-chat',
+      href: '/messages',
       icon: <MessageSquare size={18} />,
     },
-    { 
-      key: 'calendar', 
-      label: 'CALENDAR', 
-      href: '/calendar', 
+    {
+      key: 'calendar',
+      label: 'CALENDAR',
+      href: '/calendar',
       icon: <Calendar size={18} />,
-      isExternal: true 
+      isExternal: true
     },
     { key: 'todo', label: 'TO-DO', href: '/todo', icon: <CheckSquare size={18} /> },
   ];
 
   return (
     <>
-      <aside className="hidden md:flex w-64 h-screen bg-dark border-r border-white/5 flex-col pt-6 sticky top-0">
+      <aside className="hidden md:flex w-64 h-screen bg-sidebar border-r border-sidebar-border flex-col pt-6 sticky top-0">
+
         <ul className="flex flex-col pr-4">
           {basicLinks.map((link) => {
             const isActive = pathname === link.href;
@@ -36,11 +37,11 @@ const StreamSideBar = () => {
                   href={link.href}
                   target={link.isExternal ? "_blank" : "_self"}
                   rel={link.isExternal ? "noopener noreferrer" : undefined}
-                  className={`flex items-center gap-4 px-6 py-3 rounded-r-xl text-[12px] font-bold tracking-wider transition-all ${
-                    isActive 
-                    ? "bg-main/10 text-main shadow-[inset_4px_0_0_0_#0d7ff2]" 
-                    : "text-white/50 hover:bg-white/5 hover:text-white"
-                  }`}
+                  className={`flex items-center gap-4 px-6 py-3 rounded-r-xl text-[12px] font-bold tracking-wider transition-all ${isActive
+                      ? "bg-primary/15 text-primary shadow-[inset_4px_0_0_0_#0d7ff2]"
+                      : "text-sidebar-foreground/70 hover:bg-primary/10 hover:text-primary"
+
+                    }`}
                 >
                   {link.icon}
                   <span>{link.label}</span>
@@ -49,10 +50,12 @@ const StreamSideBar = () => {
             );
           })}
         </ul>
-        
-        <div className="my-6 px-6 opacity-20"><hr className="border-white" /></div>
-        
-        <div className="px-6 py-3 flex items-center justify-between text-white/50 hover:bg-white/5 hover:text-white cursor-pointer rounded-r-xl mr-4 transition-all mt-auto mb-6">
+
+        <div className="my-6 px-6 opacity-50"><hr className="border-sidebar-border" /></div>
+
+
+        <div className="px-6 py-3 flex items-center justify-between text-sidebar-foreground/70 hover:bg-primary/10 hover:text-primary cursor-pointer rounded-r-xl mr-4 transition-all mt-auto mb-6">
+
           <div className="flex items-center gap-4">
             <GraduationCap size={18} />
             <span className="text-[12px] font-bold uppercase">Enrolled</span>
@@ -69,9 +72,8 @@ const StreamSideBar = () => {
               key={link.key}
               href={link.href}
               target={link.isExternal ? "_blank" : "_self"}
-              className={`flex flex-col items-center gap-1 transition-all ${
-                isActive ? "text-main" : "text-white/40"
-              }`}
+              className={`flex flex-col items-center gap-1 transition-all ${isActive ? "text-main" : "text-white/40"
+                }`}
             >
               {link.icon}
               <span className="text-[10px] font-bold">{link.label}</span>

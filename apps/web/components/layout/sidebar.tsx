@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import {
   Home,
@@ -14,6 +14,7 @@ import {
   Plus,
   GraduationCap,
   Loader2,
+  Camera,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -43,11 +44,13 @@ const navItems: NavItem[] = [
   { name: "AI Chat", href: "/chat", icon: <MessageSquare className="w-5 h-5" /> },
   { name: "Messages", href: "/messages", icon: <MessageSquare className="w-5 h-5" /> },
   { name: "People", href: "/people", icon: <Users className="w-5 h-5" /> },
+  { name: "Meeting", href: "/Meeting", icon: <Camera className="w-5 h-5" /> },
   { name: "Settings", href: "/settings", icon: <Settings className="w-5 h-5" /> },
 ];
 
-export function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
+export function Sidebar({ isCollapsed, isMobile = false }: { isCollapsed: boolean; isMobile?: boolean }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { classes, currentClass, setCurrentClass, refreshClasses, loading } = useClassContext();
   const [isClassModalOpen, setIsClassModalOpen] = useState(false);
   const { contextSafe } = useGSAP();
@@ -75,11 +78,19 @@ export function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
     );
   });
 
+  const handleSelectClass = (cls: (typeof classes)[number]) => {
+    setCurrentClass(cls);
+    if (pathname === "/stream") {
+      router.push(`/stream?classId=${cls.id}`);
+    }
+  };
+
   return (
     <>
       <nav
         className={cn(
           "hidden md:flex flex-col h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300 overflow-y-auto scrollbar-hidden",
+          isMobile ? "flex" : "hidden md:flex",
           isCollapsed ? "w-20" : "w-64",
         )}
       >
@@ -134,7 +145,9 @@ export function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
                   >
                     <div>
                       <p className="text-xs text-muted-foreground">Current</p>
+
                       <p className="font-semibold text-sm line-clamp-1">
+
                         {currentClass?.name ?? "Select a class"}
                       </p>
                     </div>
@@ -147,9 +160,10 @@ export function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
                   {classes.map((cls) => (
                     <DropdownMenuItem
                       key={cls.id}
-                      onClick={() => setCurrentClass(cls)}
-                      className={currentClass?.id === cls.id ? "bg-accent" : ""}
+                      onClick={() => handleSelectClass(cls)}
+                      className={currentClass?.id === cls.id ? "bg-primary/15" : ""}
                     >
+
                       <div className="flex flex-col">
                         <p className="font-semibold text-sm">{cls.name}</p>
                         {cls.description && (
@@ -180,8 +194,10 @@ export function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
                   className={cn(
                     "w-full justify-start gap-3 transition-colors my-1",
                     isActive
-                      ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                      : "text-sidebar-foreground hover:bg-sidebar-primary/50 hover:text-sidebar-primary-foreground",
+                      ? "bg-primary/15 text-primary"
+                      : "text-sidebar-foreground hover:bg-primary/10 hover:text-primary",
+
+
                     isCollapsed ? "justify-center" : "",
                   )}
                 >

@@ -12,17 +12,39 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Mail, Bell, Palette, LogOut, Trash2, GraduationCap, Copy } from "lucide-react";
+import { Mail, Bell, Palette, LogOut, Trash2, GraduationCap, Copy, DoorOpen } from "lucide-react";
 import { useClassContext } from "@/contexts/ClassContext";
 import toast from "react-hot-toast";
+import axiosClient from "@/util/axiosClient";
+import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
-  const { currentClass, isTeacher } = useClassContext();
+  const { currentClass, isTeacher, refreshClasses } = useClassContext() as any;
+  const router = useRouter();
 
   const showJoinCode = currentClass && isTeacher(currentClass.id);
 
+  const leaveClass = async () => {
+    if (!currentClass) return;
+    try {
+      await axiosClient.delete(`/api/classes/${currentClass.id}/leave`);
+      toast.success("Left class successfully");
+      if (typeof refreshClasses === "function") {
+        await refreshClasses();
+      }
+      router.push("/dashboard");
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.error?.message ||
+        err?.response?.data?.message ||
+        "Failed to leave class"
+      );
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-2xl">
+
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold">Settings</h1>
@@ -80,23 +102,51 @@ export default function SettingsPage() {
             <Label htmlFor="name">Full Name</Label>
             <Input
               id="name"
-              placeholder="John Doe"
-              defaultValue="John Doe"
+              placeholder="Your name"
+              defaultValue={(currentClass as any)?.currentUser?.name || ""}
               className="mt-1 bg-input"
             />
+
           </div>
           <div>
             <Label htmlFor="email">Email Address</Label>
             <Input
               id="email"
               type="email"
-              placeholder="john@university.edu"
-              defaultValue="john@university.edu"
+              placeholder="Your email"
+              defaultValue={(currentClass as any)?.currentUser?.email || ""}
               className="mt-1 bg-input"
             />
+
           </div>
-          <Button>Save Changes</Button>
+          <Button
+            type="button"
+            onClick={async () => {
+              try {
+                // Uses uncontrolled inputs; for now read values from DOM.
+                const nameInput = document.getElementById('name') as HTMLInputElement | null;
+                const emailInput = document.getElementById('email') as HTMLInputElement | null;
+                const name = nameInput?.value;
+                const email = emailInput?.value;
+
+                await axiosClient.patch('/api/users/me', { name, email });
+                toast.success('Profile updated');
+                router.refresh?.();
+              } catch (err: any) {
+                toast.error(
+                  err?.response?.data?.error?.message ||
+                  err?.response?.data?.message ||
+                  'Failed to update profile'
+                );
+              }
+            }}
+          >
+            Save Changes
+          </Button>
+
+
         </div>
+
       </div>
 
       {/* Danger Zone */}
@@ -112,6 +162,22 @@ export default function SettingsPage() {
             <Button variant="outline" className="gap-2">
               <LogOut className="w-4 h-4" />
               Sign Out
+            </Button>
+          </div>
+          <Separator className="bg-destructive/20" />
+          <div>
+            <h3 className="font-semibold mb-1">Leave Class</h3>
+            <p className="text-sm text-muted-foreground mb-3">
+              Remove yourself from this classroom.
+            </p>
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={leaveClass}
+              disabled={!currentClass}
+            >
+              <DoorOpen className="w-4 h-4" />
+              Leave Class
             </Button>
           </div>
           <Separator className="bg-destructive/20" />

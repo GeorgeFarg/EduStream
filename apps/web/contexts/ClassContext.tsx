@@ -27,8 +27,8 @@ const ClassContext = createContext<ClassContextValue>({
   currentUser: null,
   userId: null,
   isTeacher: () => false,
-  setCurrentClass: () => {},
-  refreshClasses: async () => {},
+  setCurrentClass: () => { },
+  refreshClasses: async () => { },
   loading: true,
 });
 
@@ -41,6 +41,13 @@ export function ClassProvider({ children }: { children: React.ReactNode }) {
   // classId -> role mapping
   const [membershipRoles, setMembershipRoles] = useState<Record<number, string>>({});
 
+  const selectCurrentClass = useCallback((cls: Classroom) => {
+    setCurrentClass(cls);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('currentClassId', String(cls.id));
+    }
+  }, []);
+
   const fetchMe = useCallback(async () => {
     try {
       const res = await fetch(`${apiBaseUrl}/api/auth/me`, { credentials: 'include' });
@@ -48,7 +55,9 @@ export function ClassProvider({ children }: { children: React.ReactNode }) {
         const data = await res.json();
         setCurrentUser(data.user);
       }
-    } catch {}
+    } catch {
+      setCurrentUser(null);
+    }
   }, []);
 
   const refreshClasses = useCallback(async () => {
@@ -68,11 +77,29 @@ export function ClassProvider({ children }: { children: React.ReactNode }) {
         setMembershipRoles(roles);
 
         if (!currentClass && data.classes.length > 0) {
-          setCurrentClass(data.classes[0]);
+          const urlClassId =
+            typeof window !== 'undefined'
+              ? Number(new URLSearchParams(window.location.search).get('classId'))
+              : NaN;
+          const savedClassId =
+            typeof window !== 'undefined'
+              ? Number(window.localStorage.getItem('currentClassId'))
+              : NaN;
+          const preferredClass =
+            data.classes.find((cls) => cls.id === urlClassId) ??
+            data.classes.find((cls) => cls.id === savedClassId) ??
+            data.classes[0];
+
+          if (preferredClass) {
+            selectCurrentClass(preferredClass);
+          }
         }
       }
-    } catch {}
-  }, [currentClass]);
+    } catch {
+      setClasses([]);
+      setMembershipRoles({});
+    }
+  }, [currentClass, selectCurrentClass]);
 
   useEffect(() => {
     (async () => {
@@ -80,7 +107,7 @@ export function ClassProvider({ children }: { children: React.ReactNode }) {
       await Promise.all([fetchMe(), refreshClasses()]);
       setLoading(false);
     })();
-  }, []);
+  }, [fetchMe, refreshClasses]);
 
   const isTeacher = useCallback(
     (classId: number) => membershipRoles[classId] === 'TEACHER',
@@ -89,7 +116,7 @@ export function ClassProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ClassContext.Provider
-      value={{ classes, currentClass, currentUser, userId, isTeacher, setCurrentClass, refreshClasses, loading }}
+      value={{ classes, currentClass, currentUser, userId, isTeacher, setCurrentClass: selectCurrentClass, refreshClasses, loading }}
     >
       {children}
     </ClassContext.Provider>

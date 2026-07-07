@@ -1,5 +1,10 @@
-export type ClassworkStatus = 'assigned' | 'submitted' | 'graded' | 'missing' | 'returned';
-export type ClassworkUserRole = 'student' | 'teacher' | 'admin';
+export type ClassworkStatus =
+  | "assigned"
+  | "submitted"
+  | "graded"
+  | "missing"
+  | "returned";
+export type ClassworkUserRole = "student" | "teacher" | "admin";
 
 export interface ClassworkAttachment {
   id: string;
