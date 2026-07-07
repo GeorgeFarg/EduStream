@@ -93,8 +93,8 @@ app.get("/health", (req: Request, res: Response) => {
 app.use("/api/auth", authRoutes);
 
 app.use(authenticate);
-app.use("/api/classes", classRoutes);
 app.use("/api/classes", classUsersRoutes);
+app.use("/api/classes", classRoutes);
 app.use("/api/users", usersRoutes);
 
 app.use("/api/classes/:classId/chat", chatRoutes);
