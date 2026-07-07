@@ -94,15 +94,26 @@ export default function PeoplePage() {
 
       if (cls?.members) {
         setMembers(cls.members);
-        const infoMap: Record<number, UserInfo> = {};
-        cls.members.forEach((m) => {
-          infoMap[m.userId] = {
-            id: m.userId,
-            name: `User ${m.userId}`,
-            email: `user${m.userId}@example.com`,
-          };
-        });
-        setUserInfo(infoMap);
+
+        const memberIds = cls.members?.map((m) => m.userId) || [];
+        if (memberIds.length === 0) {
+          setUserInfo({});
+          return;
+        }
+
+        const resUsers = await fetch(
+          `${apiBaseUrl}/api/classes/users?classId=${encodeURIComponent(String(currentClass.id))}&ids=${encodeURIComponent(memberIds.join(','))}`,
+          { credentials: 'include' },
+        );
+
+        if (resUsers.ok) {
+          const dataUsers: { users: UserInfo[] } = await resUsers.json();
+          const infoMap: Record<number, UserInfo> = {};
+          (dataUsers.users || []).forEach((u) => {
+            infoMap[u.id] = u;
+          });
+          setUserInfo(infoMap);
+        }
       }
     } catch {
       // ignore
@@ -110,6 +121,7 @@ export default function PeoplePage() {
       setFetchLoading(false);
     }
   };
+
 
   const filteredMembers = members.filter((m) => {
     const user = userInfo[m.userId];

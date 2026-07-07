@@ -193,10 +193,11 @@ export const searchClassUsers = async (
 
     const memberIds = classMembers.map((m) => m.userId);
 
+    // Show users that match the query.
+    // Keep existing-members visible as well (front-end will still prevent adding duplicates).
     const users = await prisma.user.findMany({
       where: {
         AND: [
-          ...(memberIds.length ? [{ id: { notIn: memberIds } }] : []),
           {
             OR: [
               { name: { contains: query, mode: 'insensitive' } },
@@ -256,14 +257,13 @@ export const addUserToClass = async (
       return res.status(400).json({ error: { message: "User already in class" } });
     }
 
+    // Teachers add members as STUDENT only.
+    // Ignore any unexpected role input from the client.
     const membership = await prisma.classMembership.create({
       data: {
         userId: Number(userId),
         classId,
-        role:
-          role && String(role).toUpperCase() === "TEACHER"
-            ? ClassRole.TEACHER
-            : ClassRole.STUDENT,
+        role: ClassRole.STUDENT,
       },
       select: { id: true, userId: true, classId: true, role: true, joinedAt: true },
     });
