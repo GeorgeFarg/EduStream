@@ -88,7 +88,7 @@ export const askMaterialQuestionController = async (
 
     const chatCompletion = await openai.chat.completions.create({
       // model: "deepseek-ai/deepseek-v4-flash",
-      model: "qwen/qwen3.5-122b-a10b",
+      model: "openai/gpt-oss-20b",
       messages: messages as any,
       temperature: 0.2,
       top_p: 0.7,
