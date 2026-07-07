@@ -51,8 +51,10 @@ export const isMemberOfClass = async (
   next: NextFunction,
 ) => {
   try {
-    const userId = (req as any).user?.id;
-    const classId = Number(req.query.classId);
+    const userId = req.user?.id;
+    const classId = Number(
+      req.params.classId || req.query.classId || req.body?.classId,
+    );
 
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
@@ -78,7 +80,7 @@ export const isMemberOfClass = async (
     }
 
     req.memperShip = {
-      isTeacher: membership.role == "TEACHER",
+      isTeacher: membership.role === "TEACHER",
     };
 
     next();

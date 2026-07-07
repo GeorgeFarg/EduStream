@@ -14,6 +14,7 @@ import classRoutes from "./routes/class.routes";
 import chatRoutes from "./routes/chat.routes";
 import privateChatRoutes from "./routes/privateChat.routes";
 import meetingRoutes from "./routes/meeting.routes";
+import aiRoutes from "./routes/ai.routes";
 import { authenticate } from "./middleware/auth.middleware";
 
 const app = express();
@@ -101,6 +102,7 @@ app.use("/api/announcements", announcementRoutes);
 app.use("/api/materials", materialRoutes);
 app.use("/api/assignments", assignmentRoutes);
 app.use("/api", submissionRoutes); // Mounts /api/assignments/:id/submit and /api/submissions paths
+app.use("/api", aiRoutes);
 
 // 404 handler for undefined routes
 app.use((req: Request, res: Response) => {
