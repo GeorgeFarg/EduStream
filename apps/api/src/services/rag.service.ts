@@ -22,6 +22,26 @@ export interface PineconeVectorPayload {
   metadata: Record<string, string | number | boolean>;
 }
 
+export interface MaterialQueryOptions {
+  materialId: number;
+  classId: number;
+  question: string;
+  namespace?: string;
+  topK?: number;
+}
+
+export interface MaterialAnswerResult {
+  answer: string;
+  contextChunks: string[];
+  sources: Array<{
+    chunkIndex: number;
+    score: number;
+    fileName?: string;
+  }>;
+  materialId: number;
+  classId: number;
+}
+
 export const chunkText = (
   text: string,
   chunkSize: number = config.rag.chunkSize,
@@ -84,14 +104,17 @@ const generateEmbedding = async (text: string): Promise<number[]> => {
   }
 };
 
+const getQdrantClient = () =>
+  new QdrantClient({
+    url: process.env.QDRANT_URL || "http://localhost:6333",
+    apiKey: process.env.QDRANT_API_KEY || "your-api-key",
+  });
+
 const upsertVectorsToQdrant = async (
   vectors: PineconeVectorPayload[],
   namespace: string,
 ): Promise<void> => {
-  const client = new QdrantClient({
-    url: process.env.QDRANT_URL || "http://localhost:6333",
-    apiKey: process.env.QDRANT_API_KEY || "your-api-key",
-  });
+  const client = getQdrantClient();
 
   // Create collection if it doesn't exist
   const collectionName = namespace;
@@ -122,6 +145,120 @@ const upsertVectorsToQdrant = async (
       };
     }),
   });
+};
+
+const buildAnswerFromContext = (
+  question: string,
+  contextChunks: string[],
+): string => {
+  if (!contextChunks.length) {
+    return "I couldn't find enough relevant context in this material to answer that question confidently.";
+  }
+
+  const normalizedQuestion = question.toLowerCase().replace(/[^a-z0-9\s]/g, "");
+  const questionWords = normalizedQuestion
+    .split(/\s+/)
+    .filter((word) => word.length > 2);
+
+  const scoredChunks = contextChunks
+    .map((chunk) => {
+      const normalizedChunk = chunk.toLowerCase().replace(/[^a-z0-9\s]/g, "");
+      const chunkWords = normalizedChunk.split(/\s+/).filter(Boolean);
+      const overlap = questionWords.filter((word) =>
+        chunkWords.includes(word),
+      ).length;
+
+      return {
+        chunk,
+        score: overlap,
+      };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  const bestChunk = scoredChunks[0]?.chunk ?? contextChunks[0];
+
+  if (!bestChunk) {
+    return "I couldn't find enough relevant context in this material to answer that question confidently.";
+  }
+
+  const preview =
+    bestChunk.length > 500 ? `${bestChunk.slice(0, 500)}...` : bestChunk;
+
+  return `Based on the uploaded material, the most relevant information is: ${preview}`;
+};
+
+export const answerMaterialQuestion = async (
+  options: MaterialQueryOptions,
+): Promise<MaterialAnswerResult> => {
+  const { materialId, classId, question, namespace, topK = 5 } = options;
+
+  if (!question || question.trim().length === 0) {
+    throw new Error("Question is required");
+  }
+
+  const embedding = await generateEmbedding(question);
+  const client = getQdrantClient();
+  const collectionName = namespace ?? `class-${classId}`;
+
+  try {
+    await client.getCollection(collectionName);
+  } catch {
+    return {
+      answer: "I couldn't find any indexed content for this material yet.",
+      contextChunks: [],
+      sources: [],
+      materialId,
+      classId,
+    };
+  }
+
+  const searchResults = await client.search(collectionName, {
+    vector: embedding,
+    limit: topK,
+    with_payload: true,
+    filter: {
+      must: [
+        {
+          key: "materialId",
+          match: {
+            value: String(materialId),
+          },
+        },
+        {
+          key: "classId",
+          match: {
+            value: String(classId),
+          },
+        },
+      ],
+    },
+  });
+
+  const matchedResults = (searchResults as Array<any>).filter((point) => {
+    const payload = point?.payload ?? {};
+    return (
+      String(payload.materialId ?? "") === String(materialId) &&
+      String(payload.classId ?? "") === String(classId)
+    );
+  });
+
+  const contextChunks = matchedResults
+    .map((point) => String(point?.payload?.chunkText ?? ""))
+    .filter(Boolean);
+
+  const sources = matchedResults.map((point, index) => ({
+    chunkIndex: Number(point?.payload?.chunkIndex ?? index),
+    score: Number(point?.score ?? 0),
+    fileName: String(point?.payload?.fileName ?? ""),
+  }));
+
+  return {
+    answer: buildAnswerFromContext(question, contextChunks),
+    contextChunks,
+    sources,
+    materialId,
+    classId,
+  };
 };
 
 export const ingestMaterialToRag = async (
