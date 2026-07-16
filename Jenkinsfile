@@ -6,13 +6,10 @@ pipeline {
     stages {
         stage('Hello') {
             steps {
-                script {
-                    // 1. Echoing the username is safe and visible
-                    echo "The bound username is: ${env.GITHUB_CREDS_USR}"
-                    
-                    // 2. Echoing the password directly will output ****
-                    echo "The masked password is: ${env.GITHUB_CREDS_PSW}"
-                }
+                echo "The bound username is: ${env.GITHUB_CREDS_USR}"
+                
+                // 2. Echoing the password directly will output ****
+                echo "The masked password is: ${env.GITHUB_CREDS_PSW}"
                 
                 // 3. To validate without exposing the token, use a conditional shell check
                 sh '''
