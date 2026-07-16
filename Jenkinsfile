@@ -6,7 +6,7 @@ pipeline {
     stages {
         stage('Hello') {
             steps {
-                echo "Hello World ${GITHUB_CREDS.username}" 
+                echo "Hello World ${env.GITHUB_CREDS_USER}" 
             }
         }
     }
